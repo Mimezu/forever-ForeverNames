@@ -885,7 +885,7 @@ local function BuildNPCs(kit, view, index)
     names:End()
     local fix = right:Card("Mislabeled NPC?")
     fix:Note("Target the NPC, then pick how it should be labeled. Auto returns it to automatic detection.")
-    for i, entry in ipairs({{"Vendor", "vendor"}, {"Quest giver", "quest"}, {"Service", "interactive"}, {"Hide", "hide"}, {"Auto", "auto"}}) do
+    for i, entry in ipairs({{"Vendor", "vendor"}, {"Quest giver", "quest"}, {"Service", "interactive"}, {"Hide", "hidenpc"}, {"Auto", "auto"}}) do
         fix:Button(entry[1], function() SlashCmdList.FOREVERNAMES(entry[2]) end,
             {same = i > 1, width = 68, tip = "Same as /fnames " .. entry[2] .. " with the NPC targeted."})
     end

@@ -862,6 +862,14 @@ do
  units.target={id='821',name='Harbor Cat'}
  equal(addedKey,'npc:821','Add my target also takes NPCs')
  equal(added.npc,true,'NPC entries are marked')
+ -- "/fnames hidenpc" hides the targeted NPC's label; "/fnames hide" is the key
+ -- that hides every label. Both used to share one command.
+ local labelsWere=A.labelsHidden
+ SlashCmdList.FOREVERNAMES('hidenpc')
+ equal(A.db.overrides['821'],'hide','/fnames hidenpc records a hide override for the target')
+ equal(A.labelsHidden,labelsWere,'/fnames hidenpc leaves the hide-all key alone')
+ SlashCmdList.FOREVERNAMES('auto')
+ equal(A.db.overrides['821'],nil,'/fnames auto clears the override')
  units.target=nil
  C.RemovePerson('npc:820');settle()
  equal(state(tf).overlay.shown,false,'removed NPC goes back to unlabeled')

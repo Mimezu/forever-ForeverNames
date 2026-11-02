@@ -4,6 +4,15 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.11.4 Review fixes (live client 70707)
+
+- Fixed: the **Hide** button of "Mislabeled NPC?" (and the old `/fnames hide`
+  override) had been hiding *every* label since the hide-all key took that
+  command. The per-NPC override is now `/fnames hidenpc`; `/fnames hide` and
+  the key binding keep hiding and showing all labels.
+- Fixed: the wounded-bar preview in layout A's Health bars page showed white
+  instead of a class color when the bar color was set to Class.
+
 ## 1.11.3 Your people's icon, and the suite switch
 
 - Where your people's icon sits among the other icons (before the name, after

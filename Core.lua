@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.11.3"
+A.version = "1.11.4"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -588,10 +588,20 @@ events:SetScript("OnEvent", function(_, event, arg)
         -- Unit events also arrive for player/party/pet/target tokens. Only
         -- refresh the matching active plate; unrelated events must not turn
         -- into a crowd-wide cursor/tooltip scan.
+        if IsWorldPlateToken(arg) then
+            -- A plate token names its plate: no GUID compare across the crowd.
+            if active[arg] then
+                local cached = event == "UNIT_NAME_UPDATE" and titleCache[Read(UnitGUID, arg) or ""]
+                if cached then cached.expires = 0 end
+                QueueUnit(arg, true)
+            end
+            return
+        end
         local guid = Read(UnitGUID, arg)
+        if not guid then return end
         for unit in pairs(active) do
-            if unit == arg or (guid and Read(UnitGUID, unit) == guid) then
-                local cached = guid and titleCache[guid]
+            if Read(UnitGUID, unit) == guid then
+                local cached = titleCache[guid]
                 if cached and event == "UNIT_NAME_UPDATE" then cached.expires = 0 end
                 QueueUnit(unit, true)
             end
@@ -726,12 +736,15 @@ SlashCmdList.FOREVERNAMES = function(message)
                 "UnitNameEnemyPlayerName:", tostring(GetCVar("UnitNameEnemyPlayerName")))
         end
         print("Forever Names:", Read(UnitName, "target") or "No target", "NPC:", A.IsNPC("target"), "attackable:", tostring(Read(UnitCanAttack, "player", "target")), "reaction:", tostring(Read(UnitReaction, "target", "player")), "interactable:", tostring(Read(UnitIsInteractable, "target")), "role:", tostring(A.Classify("target")), "cursor:", tostring(texture), tostring(atlas), "title:", tostring(A.Title("target")))
-    elseif command == "vendor" or command == "quest" or command == "interactive" or command == "hide" or command == "auto" then
+    elseif command == "vendor" or command == "quest" or command == "interactive" or command == "hidenpc" or command == "auto" then
+        -- Per-NPC override. "hidenpc" hides this NPC's label; "/fnames hide"
+        -- (above) is the key that hides every label.
         local id = A.NPCID("target")
         if not id or not A.IsNPC("target") then print("Forever Names: target a living, non-attackable NPC first."); return end
-        db.overrides[id] = command ~= "auto" and command or nil
+        local override = command == "hidenpc" and "hide" or command
+        db.overrides[id] = command ~= "auto" and override or nil
         A.Refresh()
-        print("Forever Names:", UnitName("target"), "=", command)
+        print("Forever Names:", UnitName("target"), "=", override)
     elseif A.OpenOptions then
         A.OpenOptions()
     end

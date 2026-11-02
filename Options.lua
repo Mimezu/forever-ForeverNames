@@ -309,15 +309,17 @@ function A.CreateOptions()
         end
         return {0.4, 0.7, 1}
     end
-    -- Icon color as it would look on the sample player (a Paladin).
-    IconPreviewColor = function(key, person)
-        local mode = A.IconColorMode(key, person)
+    -- The sample player is a Paladin.
+    local function SampleClassColor()
+        local class = RAID_CLASS_COLORS and RAID_CLASS_COLORS.PALADIN
+        return class and {class.r, class.g, class.b} or {0.96, 0.55, 0.73}
+    end
+    -- Icon color as it would look on the sample player.
+    IconPreviewColor = function(key)
+        local mode = A.IconColorMode(key)
         if mode == "name" then return PlayerPreviewColor() end
-        if mode == "class" then
-            local class = RAID_CLASS_COLORS and RAID_CLASS_COLORS.PALADIN
-            return class and {class.r, class.g, class.b} or {0.96, 0.55, 0.73}
-        end
-        return A.IconColor(key, person)
+        if mode == "class" then return SampleClassColor() end
+        return A.IconColor(key)
     end
     -- A color button shows the swatch, or "Class" / "Name" for follow modes.
     ShowColorChoice = function(button, mode, color, enabled)
@@ -477,7 +479,7 @@ function A.CreateOptions()
 
         local fix = Card(page, "Mislabeled NPC?", 0, -262, 810, 170)
         Note(fix, "Target the NPC, then pick how it should be labeled. Auto returns it to automatic detection.", 14, -40, 780)
-        for i, entry in ipairs({{"Vendor", "vendor"}, {"Quest giver", "quest"}, {"Service", "interactive"}, {"Hide", "hide"}, {"Auto", "auto"}}) do
+        for i, entry in ipairs({{"Vendor", "vendor"}, {"Quest giver", "quest"}, {"Service", "interactive"}, {"Hide", "hidenpc"}, {"Auto", "auto"}}) do
             local button = Button(fix, entry[1], 14 + (i - 1) * 124, -64, 114, function() SlashCmdList.FOREVERNAMES(entry[2]) end)
             Tooltip(button, "Same as /fnames " .. entry[2] .. " with the NPC targeted.")
         end
@@ -964,7 +966,7 @@ function A.CreateOptions()
             heightStep.value:SetText((tonumber(db.woundedHeight) or 2) .. " px")
             local barMode = db.woundedColorMode or "custom"
             local barSample = barMode == "name" and PlayerPreviewColor()
-                or barMode == "class" and IconPreviewColor("people", {colorMode = "class"}) or db.colors.wounded
+                or barMode == "class" and SampleClassColor() or db.colors.wounded
             woundedColor:SetText(barMode == "class" and "Bar color: class" or barMode == "name" and "Bar color: name" or "Bar color")
             woundedColor.swatch:SetShown(barMode == "custom")
             woundedColor.swatch:SetColorTexture(unpack(db.colors.wounded))
