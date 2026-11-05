@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.11.4"
+A.version = "1.11.5"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -468,19 +468,8 @@ events:RegisterEvent("ADDON_LOADED")
 events:SetScript("OnEvent", function(_, event, arg)
     if event == "ADDON_LOADED" then
         if arg ~= addonName then return end
-        -- Renamed from Forever Names in 1.7.0: adopt its settings once.
-        if type(ForeverNamesDB) ~= "table" and type(FriendlyNPCNamesDB) == "table" then
-            ForeverNamesDB = FriendlyNPCNamesDB
-        end
-        FriendlyNPCNamesDB = nil
         ForeverNamesDB = type(ForeverNamesDB) == "table" and ForeverNamesDB or {}
         db = ForeverNamesDB
-        db.sharpSmoothScaling = nil -- Retired: confirmed movement stutter on this client.
-        if db.playerLevelNearOnly then db.playerLevelScope = "near" end -- 1.8.16 checkbox
-        db.playerLevelNearOnly = nil
-        db.enemyFont, db.enemyOpacity, db.enemyFactionPosition = nil, nil, nil -- 1.9.5 lab experiments
-        db.outline, db.shadow, db.font, db.size, db.titleSize = nil, nil, nil, nil, nil -- pre-1.2 settings, unused
-        db.journalGroupmates = nil -- 1.9.15 option; always part of the journal since 1.9.16
         for key, value in pairs(A.defaults) do
             if key ~= "colors" and db[key] == nil then db[key] = value end
         end
@@ -613,7 +602,7 @@ events:SetScript("OnEvent", function(_, event, arg)
         Learn((#available > 0 or #quests > 0) and "quest" or "interactive")
     elseif event == "QUEST_GREETING" or event == "QUEST_DETAIL" or event == "QUEST_PROGRESS" or event == "QUEST_COMPLETE" then Learn("quest")
     elseif event == "QUEST_LOG_UPDATE" then ScheduleQuestRefresh()
-    else ScheduleAll() end
+    end
 end)
 -- No OnUpdate or repeating ticker. Only events and bounded late-data retries
 -- enqueue work; a settled scene performs no addon classification/tooltip scans.

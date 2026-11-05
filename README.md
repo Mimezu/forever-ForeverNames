@@ -4,6 +4,17 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.11.5 Cleanup: one-time migrations removed
+
+- The settings file is `ForeverNamesDB` only. The 1.7.0 adoption of the old
+  `FriendlyNPCNamesDB` and the one-time clears of retired keys
+  (`sharpSmoothScaling`, `playerLevelNearOnly`, the 1.9.5 enemy lab keys, the
+  pre-1.2 style keys, `journalGroupmates`) are gone; the live account's saved
+  settings held none of them. Settings older than 1.9.16 would no longer carry
+  over automatically.
+- Removed the unreachable fallback branch at the end of the event handler.
+  Nothing changes in game.
+
 ## 1.11.4 Review fixes (live client 70707)
 
 - Fixed: the **Hide** button of "Mislabeled NPC?" (and the old `/fnames hide`

@@ -2,8 +2,8 @@
 ## Title: Forever Names
 ## Notes: Custom friendly player names and NPC names with real subtitles and role colors.
 ## Author: Mimezu
-## Version: 1.11.4
-## SavedVariables: ForeverNamesDB, FriendlyNPCNamesDB
+## Version: 1.11.5
+## SavedVariables: ForeverNamesDB
 ## LoadSavedVariablesFirst: 1
 # Settings load through native SavedVariables.
 ## OptionalDeps: Blizzard_NamePlates
