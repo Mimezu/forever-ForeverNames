@@ -95,6 +95,7 @@ function M:GetStringHeight()
  if not self.textWidth or self.textWidth<=0 or type(self.text)~='string' then return 14 end
  return math.max(1,math.ceil(#self.text*7/self.textWidth))*14
 end
+function M:GetStringWidth() return type(self.text)=='string' and #self.text*7 or 0 end
 function M:GetWidth() return self.width or 400 end
 function M:SetDrawLayer() end
 function M:GetChecked() return self.checked end
@@ -653,23 +654,29 @@ do
  C.OpenOptions();C.SelectPerson('player-homerealm')
  check(C.options.shown,'Companion Journal has its own window with the list')
  -- Social actions use the real name, and keep their recipient if rows are recycled.
+ -- The menu is Companion Journal's own (Blizzard's menus taint the gamepad interface
+ -- when opened from addon code): its rows are read from C.PersonMenu.
  do
-  local oldMenu,oldFriends,oldChat,oldParty=MenuUtil,C_FriendList,ChatFrameUtil,C_PartyInfo
-  local menu,calls,menuCount={}, {},0
-  MenuUtil={CreateContextMenu=function(owner,generate)
-   menuCount=menuCount+1;menu={}
-   generate(owner,{CreateTitle=function(_,name) menu.title=name end,CreateDivider=function() end,CreateButton=function(_,label,fn)
-    local item={label=label,fn=fn,SetEnabled=function(self,on) self.enabled=on end}
-    menu[#menu+1]=item;return item
-   end})
-  end}
+  local oldFriends,oldChat,oldParty=C_FriendList,ChatFrameUtil,C_PartyInfo
+  local calls={}
+  local function Menu()
+   local m={}
+   if not C.PersonMenu.open then return m end
+   for _,r in ipairs(C.PersonMenu.panel.rows) do
+    if r.shown and r.entry then
+     if r.entry.title then m.title=r.entry.title
+     elseif not r.entry.divider then m[#m+1]={label=r.entry.text,fn=r.entry.func,enabled=not r.entry.disabled} end
+    end
+   end
+   return m
+  end
   C_FriendList={AddFriend=function(name) calls.friend=name end}
   ChatFrameUtil={SendTell=function(name) calls.whisper=name end}
   C_PartyInfo={InviteUnit=function(name) calls.invite=name end}
   local row
   for _,f in ipairs(frames) do if f.key=='player-homerealm' and f.detail then row=f end end
   check(row and row.clicks[2]=='RightButtonUp','People row accepts right click')
-  row.scripts.OnClick(row,'LeftButton');equal(menuCount,0,'left click only selects')
+  row.scripts.OnClick(row,'LeftButton');check(not C.PersonMenu.open,'left click only selects')
   C.CloseJournal()
   row.scripts.OnDoubleClick(row,'LeftButton')
   check(CompanionJournalBook and CompanionJournalBook:IsShown(),'double-click opens their journal')
@@ -685,6 +692,8 @@ do
   end
   C.CloseJournal()
   row.scripts.OnClick(row,'RightButton')
+  local menu=Menu()
+  check(C.PersonMenu.open and C.PersonMenu.panel:IsShown() and C.PersonMenu.catcher:IsShown(),'right click opens the addon menu over a cover')
   equal(#menu,4,'right click offers three social actions and the journal')
   equal(menu[4].label,'Open journal','journal entry follows the social actions')
   equal(menu.title,'Player-HomeRealm','menu identifies actual character despite display name')
@@ -692,6 +701,7 @@ do
   local key=row.key;row.key='bound-faraway'
   for i=1,3 do local item=menu[i]; check(item.enabled,'available social action enabled');item.fn() end
   menu[4].fn()
+  C.PersonMenu.Close()
   check(CompanionJournalBook and CompanionJournalBook:IsShown(),'journal entry opens the journal')
   -- A long entry wraps: the next entry starts below both of its lines.
   do
@@ -708,16 +718,23 @@ do
   equal(calls.friend,'Player-HomeRealm','friend action keeps original character')
   equal(calls.whisper,'Player-HomeRealm','whisper keeps original character')
   equal(calls.invite,'Player-HomeRealm','invite keeps original character')
-  local count=menuCount
   C.db.people['npc:987654']={name='Test NPC',npc=true}
-  C.OpenPersonMenu(row,'npc:987654');C.OpenPersonMenu(row,'missing')
-  equal(menuCount,count,'NPC and absent entries have no social menu')
+  C.OpenPersonMenu(row,'npc:987654');check(not C.PersonMenu.open,'NPC entries have no social menu')
+  C.OpenPersonMenu(row,'missing');check(not C.PersonMenu.open,'absent entries have no social menu')
+  C.OpenPersonMenu(row,row.key);check(C.PersonMenu.open,'the menu opens')
+  C.PersonMenu.catcher.scripts.OnKeyDown(C.PersonMenu.catcher,'ESCAPE')
+  check(not C.PersonMenu.open and not C.PersonMenu.catcher:IsShown(),'Escape closes the menu')
+  C.OpenPersonMenu(row,row.key);C.PersonMenu.catcher.scripts.OnMouseDown(C.PersonMenu.catcher)
+  check(not C.PersonMenu.open,'a click outside closes the menu')
   InputUtil={IsGamepadUIEnabled=function() return true end}
   C.OpenPersonMenu(row,row.key)
-  equal(menuCount,count,'gamepad interface: no addon menu (it taints gamepad focus)')
+  menu=Menu()
+  check(C.PersonMenu.open and #menu==4,'gamepad interface: the addon menu opens (it is not Blizzard menu code)')
+  check(menu[1].enabled and not menu[2].enabled and menu[3].enabled,'gamepad interface: Whisper off (it would focus chat from addon code), the rest on')
+  C.PersonMenu.Close()
   InputUtil=nil
   C.db.people['npc:987654']=nil
-  MenuUtil,C_FriendList,ChatFrameUtil,C_PartyInfo=oldMenu,oldFriends,oldChat,oldParty
+  C_FriendList,ChatFrameUtil,C_PartyInfo=oldFriends,oldChat,oldParty
  end
  local optionsButton,listCard
  for _,f in ipairs(frames) do if f.text=='Options' and f.kind=='Button' then optionsButton=f end end
