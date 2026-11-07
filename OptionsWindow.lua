@@ -1,9 +1,7 @@
 local _, A = ...
--- Settings window, layout B (1.10): organized by who a setting is about, not
--- by when it was added. Tabs: Players, Enemies, NPCs, All names. Players and
--- Enemies use the same cards in the same places, under a live preview.
--- Layout A (Options.lua) is the window as it was before 1.10 and stays as the
--- fallback: the footer switches between them. Both edit the same settings.
+-- Settings window: organized by who a setting is about, not by when it was
+-- added. Tabs: Players, Enemies, NPCs, All names. Players and Enemies use the
+-- same cards in the same places, under a live preview.
 local W, H = 860, 580
 local TAB_SCALE = 0.9
 local GOLD, NOTE, DIM = {1, 0.82, 0}, {0.80, 0.77, 0.70}, {0.5, 0.5, 0.5}
@@ -978,16 +976,16 @@ local PAGES = {
         views = {"Visibility", "Text & tools"}, build = BuildAll},
 }
 
-function A.CreateOptionsB()
+function A.CreateOptions()
     local db, skin = A.db, A.OptionsSkin
-    local frame = CreateFrame("Frame", "ForeverNamesOptionsB", UIParent, "BackdropTemplate")
-    A.optionsB = frame
+    local frame = CreateFrame("Frame", "ForeverNamesOptions", UIParent, "BackdropTemplate")
+    A.options = frame
     frame:Hide()
     frame:SetSize(W, H)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")
     frame:EnableMouse(true)
-    if UISpecialFrames then table.insert(UISpecialFrames, "ForeverNamesOptionsB") end
+    if UISpecialFrames then table.insert(UISpecialFrames, "ForeverNamesOptions") end
     local heading = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     heading:SetText("Forever Names")
     if skin then skin.Frame(frame, heading)
@@ -1007,14 +1005,14 @@ function A.CreateOptionsB()
     local pageIndex = 1
     local function Select(index)
         pageIndex = pages[index] and index or 1
-        db.optionsPageB = pageIndex
+        db.optionsPage = pageIndex
         for i, page in ipairs(pages) do
             page.frame:SetShown(i == pageIndex)
             tabs[i].selected:SetShown(i == pageIndex)
         end
         A.RefreshOptions()
     end
-    A.SelectOptionsPageB = Select
+    A.SelectOptionsPage = Select
     local tabInfo = C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo("common-sidetab")
     local tabWidth, tabHeight = tabInfo and tabInfo.width or 43, tabInfo and (tabInfo.height - 5) or 55
     for i, info in ipairs(PAGES) do
@@ -1099,9 +1097,9 @@ function A.CreateOptionsB()
         else tab:SetPoint("TOPLEFT", tabs[i - 1], "BOTTOMLEFT", 0, -2) end
         tabs[i] = tab
     end
-    A.optionsBTabs, A.optionsBPages = tabs, pages
+    A.optionsTabs, A.optionsPages = tabs, pages
 
-    -- Footer: enable, the layout switch, the link to Companion Journal, Close.
+    -- Footer: enable, the link to Companion Journal, Close.
     local enableBox = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
     enableBox:SetPoint("BOTTOMLEFT", 22, 14); enableBox:SetSize(26, 26)
     local enableText = enableBox.Text or enableBox.text
@@ -1109,7 +1107,7 @@ function A.CreateOptionsB()
     enableBox:SetScript("OnClick", function(box) A.SetOption("enabled", box:GetChecked() == true) end)
     local close = kit.Button(frame, "Close", 0, 0, 100, function() frame:Hide() end, 24)
     close:ClearAllPoints(); close:SetPoint("BOTTOMRIGHT", -18, 14)
-    A.optionsBClose = close
+    A.optionsCloseButton = close
     -- "Names | Journal": the two windows of the suite, one switch (with both installed).
     local journal = kit.Button(frame, "Journal", 0, 0, 90, function()
         local people = A.People and A.People()
@@ -1124,7 +1122,7 @@ function A.CreateOptionsB()
     local status = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     status:SetPoint("TOPRIGHT", -40, -13); status:SetJustifyH("RIGHT")
 
-    function A.RefreshOptionsB()
+    function A.RefreshOptions()
         if not frame:IsShown() then return end
         enableBox:SetChecked(db.enabled and true or false)
         journal:SetShown(A.People and A.People() ~= nil); namesHere:SetShown(A.People and A.People() ~= nil)
@@ -1136,55 +1134,16 @@ function A.CreateOptionsB()
             if page.preview and page.frame:IsShown() then RefreshPreview(page.preview) end
         end
     end
-    frame:SetScript("OnShow", A.RefreshOptionsB)
+    frame:SetScript("OnShow", A.RefreshOptions)
 
-    -- The layout switch lives in both windows; A keeps working as before.
-    local function SetLayout(value)
-        db.optionsLayout = value
-        A.OpenOptions()
-    end
-    A.SetOptionsLayout = SetLayout
-    for _, host in ipairs({A.options, frame}) do
-        local label = host:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-        label:SetPoint("BOTTOM", host, "BOTTOM", -60, 20); label:SetText("Layout")
-        for i, value in ipairs({"a", "b"}) do
-            local button = CreateFrame("Button", nil, host, "UIPanelButtonTemplate")
-            button:SetSize(34, 22)
-            button:SetPoint("BOTTOM", host, "BOTTOM", -20 + (i - 1) * 38, 16)
-            button:SetText(value:upper())
-            button:SetScript("OnClick", function() SetLayout(value) end)
-            if skin then skin.Button(button) end
-            kit.Tooltip(button, value == "a" and "The settings window as before 1.10." or "Organized by who a setting is about: Players, Enemies, NPCs, All names.")
-            host["layout" .. value] = button
-        end
-    end
-
-    -- Wrap layout A's entry points: one window shows at a time.
-    local refreshA, openA = A.RefreshOptions, A.OpenOptions
-    function A.RefreshOptions()
-        refreshA()
-        A.RefreshOptionsB()
-        for _, host in ipairs({A.options, frame}) do
-            for _, value in ipairs({"a", "b"}) do
-                local button = host["layout" .. value]
-                if button then button:SetEnabled(db.optionsLayout ~= value) end
-            end
-        end
-    end
     function A.OpenOptions()
-        if db.optionsLayout == "b" then
-            A.options:Hide()
-            if UIParent and UIParent.GetWidth and UIParent.GetHeight then
-                frame:SetScale(math.max(0.4, math.min(1, (UIParent:GetWidth() - 40) / (W + 60), (UIParent:GetHeight() - 40) / H)))
-            end
-            Select(tonumber(db.optionsPageB) or 1)
-            frame:Show()
-            A.RefreshOptions()
-        else
-            frame:Hide()
-            openA()
-            A.RefreshOptions()
+        if UIParent and UIParent.GetWidth and UIParent.GetHeight then
+            -- The side tabs sit outside the frame's right edge.
+            frame:SetScale(math.max(0.4, math.min(1, (UIParent:GetWidth() - 40) / (W + 60), (UIParent:GetHeight() - 40) / H)))
         end
+        Select(tonumber(db.optionsPage) or 1)
+        frame:Show()
+        A.RefreshOptions()
     end
-    Select(tonumber(db.optionsPageB) or 1)
+    Select(tonumber(db.optionsPage) or 1)
 end

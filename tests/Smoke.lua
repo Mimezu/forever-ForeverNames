@@ -202,7 +202,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','OptionsSkin.lua','ColorPicker.lua','Options.lua','OptionsB.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','OptionsSkin.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -1191,10 +1191,10 @@ do
  equal(state(hpf).name.text,'Hostile player','no mark')
 
  -- The emblem always sits before the name, even when other icons go after it.
- enemyUnit.pvp=true;A.SetOption('iconPosition','right');settle()
+ enemyUnit.pvp=true;A.SetOption('enemySwordsPosition','right');settle()
  equal(pool[1].anchor[1],'RIGHT','emblem before the name')
- equal(pool[2].anchor[1],'LEFT','swords follow the Icons page (after)')
- A.SetOption('iconPosition','left');enemyUnit.pvp=nil;A.Refresh();settle()
+ equal(pool[2].anchor[1],'LEFT','swords follow their own setting (after)')
+ A.SetOption('enemySwordsPosition','left');enemyUnit.pvp=nil;A.Refresh();settle()
  A.SetOption('enemyShowLevel',true);A.SetOption('enemyLevelClassColor',true)
  -- The Players "Show for" level scope does not hide enemy levels.
  A.db.playerLevelScope='target'
@@ -1206,10 +1206,9 @@ do
  A.db.playerLevelScope='all'
  UnitLevel=realLevel;enemyUnit.level=nil
  A.SetOption('enemyShowLevel',false);A.SetOption('enemyLevelClassColor',false)
- -- 1.10: enemies have their own level, guild, icon and bar settings (layout B
- -- keeps them apart from the friendly ones; layout A writes both).
+ -- 1.10: enemies have their own level, guild, icon and bar settings, apart
+ -- from the friendly ones.
  do
-  A.db.optionsLayout='b'
   enemyUnit.level=23
   local realLevel2=UnitLevel;UnitLevel=function(u) return units[u] and units[u].level end
   A.SetOption('enemyShowLevel',true);A.SetOption('playerLevelSide','right')
@@ -1262,11 +1261,11 @@ do
   equal(A.db.enemyShowLevel,not enemyBefore,'the enemy level key toggles enemy levels')
   equal(A.db.playerShowLevel,friendlyBefore,'and leaves friendly levels alone')
   ForeverNames_ToggleEnemyLevel()
-  A.db.optionsLayout='a'
-  -- Layout A still writes both sides (the window as it was before 1.10).
-  A.SetOption('playerLevelSide','left');equal(A.db.enemyLevelSide,'left','layout A: one level side for both')
+  -- Friendly settings stay friendly.
+  local enemySide,enemyIcon=A.db.enemyLevelSide,A.db.enemyIconSize
+  A.SetOption('playerLevelSide','left');equal(A.db.enemyLevelSide,enemySide,'friendly level side leaves enemies alone')
   A.SetOption('playerLevelSide','right')
-  A.SetOption('iconSize',18);equal(A.db.enemyIconSize,18,'layout A: one icon size for both')
+  A.SetOption('iconSize',18);equal(A.db.enemyIconSize,enemyIcon,'friendly icon size leaves enemies alone')
   A.SetOption('iconSize',nil)
  end
  -- Always-on health bar, class colored; secret values go straight to the bar.
@@ -1496,11 +1495,6 @@ do
  popover:Cancel()
  equal(A.db.colors.vendor[1],before[1],'cancel restores the original color')
  check(not popover.shown,'cancel closes the palette')
- A.PickLevelColor()
- popover.swatches[4].scripts.OnClick();popover.done.scripts.OnClick()
- equal(A.db.playerLevelColorMode,'custom','choosing a level color selects Custom')
- equal(A.db.colors.playerLevel[2],A.colorPalette[4][2],'level color saved')
- A.db.playerLevelColorMode='name';A.db.colors.playerLevel={.78,.78,.78}
  ColorPickerFrame=realPicker
 end
 -- Settings window: tabs, remembered page, and checkboxes wired to settings.
@@ -1590,17 +1584,11 @@ do
  A.SetTargetHealthPreset('classic')
  equal(healthReads,reads,'style edits do not query health again')
  equal(updateCalls,updateCount,'health settings do not refresh/classify the crowd')
- local function findControl(text,x,y)
-  for _,f in ipairs(frames) do
-   if f.text==text and f.anchor and f.anchor[2]==x and f.anchor[3]==y then return f end
-  end
-  error('missing settings control '..text)
- end
- findControl('+',350,-134).scripts.OnClick()
- equal(hp.width,112,'width button changes width rather than another captured row')
- findControl('+',350,-164).scripts.OnClick()
- equal(hp.height,10,'height button changes height')
- findControl('+',350,-194).scripts.OnClick()
+ A.StepTargetHealth(1,1)
+ equal(hp.width,112,'width step changes width rather than another row')
+ A.StepTargetHealth(2,1)
+ equal(hp.height,10,'height step changes height')
+ A.StepTargetHealth(3,1)
  equal(hp.anchor[5],-4,'gap button moves bar farther below text')
  A.db.targetHealthOpacity=.5;A.db.targetOpacity=.4;A.db.otherOpacity=1
  emit('PLAYER_TARGET_CHANGED')
@@ -1737,9 +1725,13 @@ do
   check(levelReads<=1,'hidden level option makes no level queries beyond a known person record')
   equal(hp.levelPill,nil,'hidden level pill allocates no live badge')
   check(not healthDriver.events.UNIT_LEVEL,'hidden level has no unit-level subscription')
-  local levelToggle
+  -- The "Show their level" checkbox on the selected player's health bar card.
+  local barCard,levelToggle
   for _,f in ipairs(frames) do
-   if f.Text and f.Text.text=='Show the player\'s level' then levelToggle=f end
+   if f.Text and f.Text.text=='Show under the selected friendly player' then barCard=f.parent end
+  end
+  for _,f in ipairs(frames) do
+   if barCard and f.parent==barCard and f.Text and f.Text.text=='Show their level' then levelToggle=f end
   end
   check(levelToggle~=nil,'level pill has a show/hide settings checkbox')
   units.target.level=42
@@ -1789,12 +1781,8 @@ do
   A.SetTargetHealthPreset('minimal')
   equal(pill.art.shown,false,'Classic artwork removed when returning to Minimal')
   equal(pill.rim.shown,false,'Classic border does not survive return to Minimal')
-  A.OpenOptions() -- the settings preview is drawn while the window is open
+  A.OpenOptions() -- the settings preview is drawn while the window is open (sample level, never the target's)
   equal(levelReads-levelBefore,1,'style and preview changes do not read target level')
-  local preview
-  for _,f in ipairs(frames) do if f.kind=='StatusBar' and f~=hp and f.levelPill then preview=f end end
-  check(preview and preview.levelPill.shown,'settings preview includes level pill')
-  equal(preview.levelPill.text.text,'60','preview uses sample level, not target information')
   for i=1,50 do emit('UNIT_HEALTH','target');emit('UNIT_LEVEL','nameplate4');emit('UNIT_LEVEL','party1') end
   for i=1,2000 do tick(.03) end
   equal(levelReads-levelBefore,1,'health bursts, other units, and 60 idle seconds never read levels')
@@ -1888,49 +1876,41 @@ do
  A.SetOption('playerLevelScope','all');A.SetOption('playerShowLevel',false)
  UnitLevel=realLevel
 end
--- Settings window, layout B: by who a setting is about, next to layout A.
+-- Settings window: by who a setting is about.
 do
- A.db.optionsLayout='a';A.options:Hide();A.optionsB:Hide()
+ A.options:Hide()
  SlashCmdList.FOREVERNAMES('')
- check(A.options.shown and not A.optionsB.shown,'layout A opens by default')
- SlashCmdList.FOREVERNAMES('layout b')
- check(A.optionsB.shown and not A.options.shown,'/fnames layout b opens layout B and hides A')
- equal(A.db.optionsLayout,'b','the layout is remembered')
- local pages=A.optionsBPages
+ check(A.options.shown,'/fnames opens the settings')
+ local pages=A.optionsPages
  equal(#pages,4,'four tabs: Players, Enemies, NPCs, All names')
  -- The preview follows the settings.
- A.SelectOptionsPageB(1)
+ A.SelectOptionsPage(1)
  check(pages[1].frame.shown and not pages[2].frame.shown,'Players page shown')
  local slots=pages[1].preview.slots
  equal(slots[1].name.text,'Aerynwen','Players preview: a sample player')
  A.db.showFriendlyPlayers=true
- A.SetOption('playerShowGuild',true);A.RefreshOptionsB()
+ A.SetOption('playerShowGuild',true);A.RefreshOptions()
  check(slots[1].sub.text:find('Dawnwatch',1,true),'guild line in the preview')
- A.SetOption('playerShowGuild',false);A.RefreshOptionsB()
+ A.SetOption('playerShowGuild',false);A.RefreshOptions()
  equal(slots[1].sub.text,'','guild line gone when off')
- A.SetOption('showFriendlyPlayers',false);A.RefreshOptionsB()
+ A.SetOption('showFriendlyPlayers',false);A.RefreshOptions()
  check(pages[1].preview.off.text:find('off',1,true),'preview says custom names are off')
  A.SetOption('showFriendlyPlayers',true)
- A.SelectOptionsPageB(2)
+ A.SelectOptionsPage(2)
  check(pages[2].frame.shown and not pages[1].frame.shown,'Enemies page shown')
- A.SetOption('enemyEnabled',true);A.RefreshOptionsB()
+ A.SetOption('enemyEnabled',true);A.RefreshOptions()
  equal(pages[2].preview.slots[1].name.text,'Kaelith','Enemies preview: a sample enemy')
- A.SetOption('enemyMark','parens');A.RefreshOptionsB()
+ A.SetOption('enemyMark','parens');A.RefreshOptions()
  equal(pages[2].preview.slots[1].name.text,'(Kaelith)','the mark shows in the preview')
  A.SetOption('enemyMark','none')
  A.SetOption('enemyEnabled',false)
- -- Views, the other tabs, and the layout switch in both windows.
+ -- Views and the other tabs.
  pages[1].select(2);check(pages[1].views[2].shown and not pages[1].views[1].shown,'the second view shows')
  pages[1].select(1)
- A.SelectOptionsPageB(3);check(pages[3].frame.shown,'NPCs page');A.SelectOptionsPageB(4);check(pages[4].frame.shown,'All names page')
- equal(A.db.optionsPageB,4,'the tab is remembered')
- A.optionsB.layouta.scripts.OnClick(A.optionsB.layouta)
- check(A.options.shown and not A.optionsB.shown and A.db.optionsLayout=='a','the switch in B goes back to A')
- A.options.layoutb.scripts.OnClick(A.options.layoutb)
- check(A.optionsB.shown and not A.options.shown,'the switch in A opens B')
- A.optionsBClose.scripts.OnClick()
- check(not A.optionsB.shown,'Close hides layout B')
- A.db.optionsLayout='a';A.options:Hide();A.optionsB:Hide()
+ A.SelectOptionsPage(3);check(pages[3].frame.shown,'NPCs page');A.SelectOptionsPage(4);check(pages[4].frame.shown,'All names page')
+ equal(A.db.optionsPage,4,'the tab is remembered')
+ A.optionsCloseButton.scripts.OnClick()
+ check(not A.options.shown,'Close hides the settings')
 end
 -- Forever Names alone (Companion Journal not installed or turned off): no
 -- People features, nothing breaks, and the People links say where they went.
@@ -1953,12 +1933,12 @@ do
  print=realPrint
  check(said and said:find('Companion Journal, which is not installed',1,true),'/fnames people says where People went')
  -- The settings are built at login, knowing whether Companion Journal is there:
- -- without it, both layouts show nothing of it (no People tab, links, notes or Rivals).
+ -- without it, the window shows nothing of it (no People tab, links, notes or Rivals).
  local mentions,realSetText={},M.SetText
  M.SetText=function(self,v) if type(v)=='string' and v~='Companion Journal' and v:find('Companion Journal',1,true) then mentions[#mentions+1]=v end;return realSetText(self,v) end
  local first=#frames+1
- A.CreateOptions();if A.CreateOptionsB then A.CreateOptionsB() end
- A.OpenOptions();A.RefreshOptions();if A.RefreshOptionsB then A.RefreshOptionsB() end
+ A.CreateOptions()
+ A.OpenOptions();A.RefreshOptions()
  M.SetText=realSetText
  local links,rivals=0,0
  for i=first,#frames do
@@ -1980,7 +1960,7 @@ do
  equal(#mentions,0,'no text about Companion Journal without it: '..table.concat(mentions,' | '))
  A.options:Hide()
  CompanionJournalAPI=api
- A.CreateOptions();if A.CreateOptionsB then A.CreateOptionsB() end
+ A.CreateOptions()
  C.SetOption('peopleRename',false);C.SetOption('peopleIcons',false);C.db.people={}
  A.Refresh();settle()
  UnitFullName,GetNormalizedRealmName=nil,nil

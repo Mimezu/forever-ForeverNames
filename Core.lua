@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.11.6"
+A.version = "1.12.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -13,7 +13,6 @@ A.defaults = {
     targetHealthWidth = 82, targetHealthHeight = 4, targetHealthGap = 3,
     targetHealthOpacity = 1, targetHealthNameColor = true,
     targetHealthColorMode = "name", -- "name", "class" or "custom" (1.10; the checkbox above is kept in step)
-    optionsLayout = "a",            -- the settings window: "a" (as before 1.10) or "b" (organized by who)
     targetHealthR = 0.25, targetHealthG = 0.85, targetHealthB = 0.4,
     opacity = 1, subtitleOpacity = 1, targetOpacity = 1, otherOpacity = 1, combatOpacity = 1,
     customizeGlobalFade = false,
@@ -519,7 +518,6 @@ events:SetScript("OnEvent", function(_, event, arg)
             end
         end
         A.CreateOptions()
-        if A.CreateOptionsB then A.CreateOptionsB() end
         -- Companion Journal (installed): changes to your people redraw our labels.
         local people = A.People and A.People()
         if people and people.Subscribe then people.Subscribe(function() if db.enabled then A.Refresh() end end) end
@@ -675,15 +673,6 @@ SlashCmdList.FOREVERNAMES = function(message)
         if A.PrintVitals then A.PrintVitals() end
     elseif command == "enemytest" then
         A.SetEnemyTest(not A.enemyTest)
-    elseif command == "layout" then
-        -- /fnames layout a | b : the settings window (A as before 1.10, B by who).
-        local choice = message:lower():match("^%s*layout%s+(%S+)")
-        if choice == "a" or choice == "b" then
-            db.optionsLayout = choice
-            if A.OpenOptions then A.OpenOptions() end
-        else
-            print("Forever Names: the settings window is layout " .. tostring(db.optionsLayout):upper() .. ". /fnames layout a or b.")
-        end
     elseif command == "hide" then
         A.ToggleLabels()
     elseif command == "blocked" then

@@ -101,5 +101,5 @@ function api.SetPeopleIconPosition(side)
 end
 function api.Open() if A.OpenOptions then A.OpenOptions() end end
 -- Our window is open (for the "Names | Journal" switch in Companion Journal).
-function api.IsOpen() return (A.options and A.options:IsShown()) or (A.optionsB and A.optionsB:IsShown()) or false end
+function api.IsOpen() return (A.options and A.options:IsShown()) or false end
 ForeverNamesAPI = api
