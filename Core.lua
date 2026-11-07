@@ -1,8 +1,9 @@
 local addonName, A = ...
-A.version = "1.11.5"
+A.version = "1.11.6"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
+    hideNativeHostileNames = true,
     hideNativePlayerNames = true,
     nativeSmoothScaling = true,
     targetOnlyVitals = true,
@@ -439,6 +440,7 @@ function A.ApplyCVars()
         -- recorded by 1.9.0-1.9.12 is restored here.
         elseif name == "UnitNameEnemyPlayerName" then manage = false
         elseif playerNameCVars[name] then manage = db.hideNativePlayerNames
+        elseif name == "UnitNameHostleNPC" then manage = db.hideNativeHostileNames
         else manage = db.hideNativeNames end
         if db.enabled and manage then
             if db.previousCVars[name] == nil then db.previousCVars[name] = current end

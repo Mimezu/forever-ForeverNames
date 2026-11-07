@@ -4,6 +4,14 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.11.6 Hostile NPC names: their own switch
+
+- "Hide Blizzard NPC names" is now two settings: **Hide Blizzard NPC names**
+  and **Hide Blizzard hostile NPC names** (NPCs > Which NPCs in layout B, the
+  General page in layout A). Uncheck the hostile one to keep the game's names
+  over hostile NPCs while the others stay hidden. Both start checked, so
+  nothing changes until you uncheck one.
+
 ## 1.11.5 Cleanup: one-time migrations removed
 
 - The settings file is `ForeverNamesDB` only. The 1.7.0 adoption of the old

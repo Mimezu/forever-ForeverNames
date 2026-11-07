@@ -34,7 +34,7 @@ function A.SetOption(key, value)
         if A.UpdateWoundedEvents then A.UpdateWoundedEvents() end
         if A.UpdatePlayerEvents then A.UpdatePlayerEvents() end
     end
-    if key == "enabled" or key == "hideNativeNames" or key == "hideNativePlayerNames" or key == "customizeGlobalFade" or key == "showFriendlyPlayers" then A.ApplyCVars() end
+    if key == "enabled" or key == "hideNativeNames" or key == "hideNativeHostileNames" or key == "hideNativePlayerNames" or key == "customizeGlobalFade" or key == "showFriendlyPlayers" then A.ApplyCVars() end
     A.Refresh()
 end
 function A.SetTextSize(key, field, value)
@@ -462,9 +462,10 @@ function A.CreateOptions()
         local page = pageFrames[1]
         local names = Card(page, "Blizzard's own names", 0, 0, 400, 250)
         Check(names, "hideNativeNames", "Hide Blizzard NPC names", 12, -40)
-        Note(names, "Both factions. Forever controls the native-name distance; addons cannot change its cutoff.", 44, -66, 340)
-        Check(names, "includeOppositeFaction", "Label opposite-faction service NPCs", 12, -104)
-        Note(names, "Non-attackable trainers, vendors and other services of the other faction.", 44, -130, 340)
+        Check(names, "hideNativeHostileNames", "Hide Blizzard hostile NPC names", 12, -66)
+        Note(names, "Both factions. Forever controls the native-name distance; addons cannot change its cutoff.", 44, -92, 340)
+        Check(names, "includeOppositeFaction", "Label opposite-faction service NPCs", 12, -130)
+        Note(names, "Non-attackable trainers, vendors and other services of the other faction.", 44, -156, 340)
         Note(names, "Unchecking restores your game's own NPC-name settings.", 14, -218, 370)
 
         local text = Card(page, "Label text", 410, 0, 400, 250)
