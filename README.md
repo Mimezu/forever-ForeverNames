@@ -4,6 +4,21 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.14.0 Two keys, set in the addon
+
+- **Hide everything** (the old "Hide or show names" key, same binding, and
+  `/fnames hide`): hides every name and nameplate, Blizzard's too (enemy,
+  friendly and personal plates, names over characters), and nothing else. Press
+  again for exactly the values you had. They are stored per character, so a
+  /reload or disconnect while hidden puts them back at login. In combat our
+  labels fade at once; Blizzard's plates follow when combat ends.
+- **Enemy names** (new key, `/fnames enemynames`): flips "Hide Blizzard hostile
+  NPC names". Showing them also turns on enemy players' names, to spot enemies
+  past nameplate range. Hiding leaves enemy player names on: turning those off
+  blanks names on Blizzard's enemy plates.
+- **All names > Text & tools > Keys**: set or clear the four Forever Names keys
+  from the addon (click, press a key; Esc cancels). Not in combat.
+
 ## 1.13.0 Quest enemies
 
 - New option **Show ! beside enemies for your quests** (NPCs > Which NPCs,

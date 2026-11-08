@@ -203,7 +203,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','OptionsSkin.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -2032,6 +2032,88 @@ do
  units.nameplate160,units.nameplate161,plates.nameplate160,plates.nameplate161=nil,nil,nil,nil
  C_QuestLog=nil
  settle()
+end
+-- Hide everything: every name and nameplate, then exactly what you had.
+do
+ cvars.UnitNameOwn='1';cvars.nameplateShowSelf='0'
+ local before={}
+ for k,v in pairs(cvars) do before[k]=v end
+ A.ToggleLabels(true)
+ equal(A.labelsHidden,true,'hide everything fades our labels')
+ for _,name in ipairs({'nameplateShowEnemies','nameplateShowFriends','nameplateShowFriendlyNpcs','UnitNameOwn','UnitNameEnemyPlayerName','UnitNameFriendlyPlayerName'}) do
+  equal(cvars[name],'0','hide everything turns off '..name)
+ end
+ check(cvars.UnitNameGuildTitle==nil,'settings the client lacks are left alone')
+ A.ApplyCVars()
+ equal(cvars.nameplateShowFriendlyNpcs,'0','our own settings pass does not undo hide everything')
+ A.SetOption('hideNativeHostileNames',not A.db.hideNativeHostileNames)
+ equal(cvars.UnitNameHostleNPC,'0','enemy names key while hidden waits')
+ A.SetOption('hideNativeHostileNames',not A.db.hideNativeHostileNames)
+ A.ToggleLabels(false)
+ equal(A.labelsHidden,nil,'labels come back')
+ for k,v in pairs(before) do equal(cvars[k],v,'hide everything restores '..k) end
+ equal(A.db.hideAllSaved,nil,'nothing left stored after showing')
+ -- In combat: labels fade now, Blizzard's settings change when combat ends.
+ combat=true
+ A.ToggleLabels(true)
+ equal(A.labelsHidden,true,'labels fade at once in combat')
+ equal(cvars.nameplateShowEnemies,before.nameplateShowEnemies,'nameplate settings wait for combat to end')
+ combat=false
+ for _,f in ipairs(frames) do if f.events.PLAYER_REGEN_ENABLED and f.scripts.OnEvent then f.scripts.OnEvent(f,'PLAYER_REGEN_ENABLED') end end
+ equal(cvars.nameplateShowEnemies,'0','after combat the nameplates hide')
+ A.ToggleLabels()
+ for k,v in pairs(before) do equal(cvars[k],v,'second press restores '..k) end
+ -- A reload while hidden: login puts your values back.
+ A.ToggleLabels(true)
+ A.allHidden=nil;A.FadeLabels(false)
+ A.RestoreHiddenNames()
+ for k,v in pairs(before) do equal(cvars[k],v,'login restores '..k) end
+ equal(A.db.hideAllSaved,nil,'login restore clears the record')
+ -- A value you change while hidden wins over the stored one.
+ A.ToggleLabels(true);cvars.UnitNameOwn='1';cvars.nameplateShowSelf='1';A.ToggleLabels(false)
+ equal(cvars.UnitNameOwn,'1','restored value');equal(cvars.nameplateShowSelf,'1','a value changed meanwhile is kept')
+ cvars.UnitNameOwn,cvars.nameplateShowSelf=nil,nil
+end
+-- Enemy names key: hostile NPCs, plus enemy players' names when shown.
+do
+ A.SetOption('hideNativeHostileNames',true)
+ equal(cvars.UnitNameHostleNPC,'0','enemy names hidden')
+ cvars.UnitNameEnemyPlayerName='0'
+ ForeverNames_ToggleEnemyNames()
+ equal(A.db.hideNativeHostileNames,false,'key shows enemy names')
+ equal(cvars.UnitNameHostleNPC,'1','hostile NPC names shown')
+ equal(cvars.UnitNameEnemyPlayerName,'1','enemy players names shown too')
+ ForeverNames_ToggleEnemyNames()
+ equal(cvars.UnitNameHostleNPC,'0','key hides hostile NPC names again')
+ equal(cvars.UnitNameEnemyPlayerName,'1','enemy player names are never zeroed (Blizzard plates need them)')
+ combat=true
+ ForeverNames_ToggleEnemyNames()
+ equal(cvars.UnitNameHostleNPC,'0','in combat the change waits')
+ combat=false;emit('PLAYER_REGEN_ENABLED')
+ equal(cvars.UnitNameHostleNPC,'1','and applies after combat')
+ A.SetOption('hideNativeHostileNames',true)
+end
+-- Keys set from our window.
+do
+ local binds,saved={},0
+ function GetBindingKey(action) local list={} for k,a in pairs(binds) do if a==action then list[#list+1]=k end end table.sort(list) return unpack(list) end
+ function SetBinding(key,action) binds[key]=action end
+ function GetBindingAction(key) return binds[key] or '' end
+ function SaveBindings() saved=saved+1 end
+ function GetCurrentBindingSet() return 2 end
+ binds.F9='TOGGLEWORLDMAP';binds.F5='FOREVERNAMES_TOGGLE_ENEMY_NAMES'
+ check(A.BindKey('FOREVERNAMES_TOGGLE_ENEMY_NAMES','F9'),'binding a key works')
+ equal(binds.F9,'FOREVERNAMES_TOGGLE_ENEMY_NAMES','key bound to the action')
+ equal(binds.F5,nil,'the old key is released')
+ equal(saved,1,'bindings saved')
+ A.BindKey('FOREVERNAMES_TOGGLE_ENEMY_NAMES',nil)
+ equal(binds.F9,nil,'clear removes the key')
+ combat=true
+ equal(A.BindKey('FOREVERNAMES_TOGGLE_LABELS','F8'),false,'no key changes in combat')
+ combat=false
+ equal(binds.F8,nil,'nothing bound in combat')
+ equal(#A.keyActions,4,'four actions on the Keys card')
+ GetBindingKey,SetBinding,GetBindingAction,SaveBindings,GetCurrentBindingSet=nil,nil,nil,nil,nil
 end
 A.db.enabled=false;A.ApplyCVars();A.Refresh()
 equal(A.targetHealthBar.shown,false,'addon disable also hides custom health')

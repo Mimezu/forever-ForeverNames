@@ -878,6 +878,7 @@ local function BuildNPCs(kit, view, index)
     local names = left:Card("Blizzard's own names")
     names:Check("Hide Blizzard NPC names", function() return db.hideNativeNames end, function(v) A.SetOption("hideNativeNames", v) end)
     names:Check("Hide Blizzard hostile NPC names", function() return db.hideNativeHostileNames end, function(v) A.SetOption("hideNativeHostileNames", v) end)
+    names:Note("Unchecked, enemy players' names show too. Key: \"Show or hide enemy names\" (All names > Text & tools).", {indent = true})
     names:Note("Forever controls the native-name distance; addons cannot change its cutoff.", {indent = true})
     names:Check("Label opposite-faction service NPCs", function() return db.includeOppositeFaction end, function(v) A.SetOption("includeOppositeFaction", v) end)
     names:Note("Trainers, vendors and other services of the other faction.", {indent = true})
@@ -904,6 +905,60 @@ local fadeLabels = {
 }
 local opacityNames = {opacity = "Overall", subtitleOpacity = "Subtitles", targetOpacity = "Targeted name",
     otherOpacity = "Untargeted names", combatOpacity = "While in combat"}
+local StopCapture, StartCapture
+-- Keys, set from our own window (saved with the game's key bindings).
+local KEY_ACTIONS = {
+    {"FOREVERNAMES_TOGGLE_LABELS", "Hide everything"},
+    {"FOREVERNAMES_TOGGLE_ENEMY_NAMES", "Enemy names"},
+    {"FOREVERNAMES_TOGGLE_LEVEL", "Friendly levels"},
+    {"FOREVERNAMES_TOGGLE_ENEMY_LEVEL", "Enemy levels"},
+}
+A.keyActions = KEY_ACTIONS
+local MODIFIERS = {LSHIFT = true, RSHIFT = true, LCTRL = true, RCTRL = true, LALT = true, RALT = true, LMETA = true, RMETA = true}
+local capturing
+local function KeyText(action)
+    local key = GetBindingKey and GetBindingKey(action)
+    if not key then return "Not set" end
+    return GetBindingText and GetBindingText(key) or key
+end
+-- key nil clears the action's keys.
+function A.BindKey(action, key)
+    if InCombatLockdown() or not SetBinding then print("Forever Names: keys can't be changed in combat."); return false end
+    for _, old in ipairs({GetBindingKey(action)}) do SetBinding(old) end
+    if key then
+        local previous = GetBindingAction and GetBindingAction(key)
+        SetBinding(key, action)
+        if previous and previous ~= "" and previous ~= action then
+            print("Forever Names: " .. key .. " no longer does \"" .. (_G["BINDING_NAME_" .. previous] or previous) .. "\".")
+        end
+    end
+    if SaveBindings then SaveBindings(GetCurrentBindingSet and GetCurrentBindingSet() or 1) end
+    return true
+end
+StopCapture = function()
+    if capturing then
+        capturing.button:SetScript("OnKeyDown", nil)
+        capturing.button:EnableKeyboard(false)
+        capturing = nil
+    end
+    if A.RefreshOptions then A.RefreshOptions() end
+end
+StartCapture = function(action, button)
+    if InCombatLockdown() then print("Forever Names: keys can't be changed in combat."); return end
+    if capturing then StopCapture() end
+    capturing = {action = action, button = button}
+    button:EnableKeyboard(true)
+    if button.SetPropagateKeyboardInput then button:SetPropagateKeyboardInput(false) end
+    button:SetScript("OnKeyDown", function(_, key)
+        if MODIFIERS[key] then return end
+        if key ~= "ESCAPE" then
+            local combo = (IsAltKeyDown() and "ALT-" or "") .. (IsControlKeyDown() and "CTRL-" or "") .. (IsShiftKeyDown() and "SHIFT-" or "") .. key
+            A.BindKey(action, combo)
+        end
+        StopCapture()
+    end)
+    if A.RefreshOptions then A.RefreshOptions() end
+end
 local function BuildAll(kit, view, index)
     local db = A.db
     local left, right = kit.Column(view, 0, 400), kit.Column(view, 410, 400)
@@ -955,11 +1010,22 @@ local function BuildAll(kit, view, index)
         perf:Check("Health and level updates only for my target", function() return db.targetOnlyVitals end, function(v) A.SetOption("targetOnlyVitals", v) end)
         perf:Note("Saves work in crowds. Friendly nameplates stay enabled while custom names or a health bar are on.")
         perf:End()
-        local hide = right:Card("Hide every name")
-        hide:Note("Fades all Forever Names labels (NPCs and players), and back again. Key binding: \"Hide or show names\" (Key Bindings > Forever Names), or /fnames hide.")
-        hide:Button("", function() A.ToggleLabels(); A.RefreshOptions() end,
-            {width = 170, label = function() return A.labelsHidden and "Show names" or "Hide names now" end})
-        hide:End()
+        local keys = right:Card("Keys")
+        keys:Note("Click a button, then press the key you want (Shift, Ctrl or Alt allowed). Esc cancels.")
+        for _, entry in ipairs(KEY_ACTIONS) do
+            keys:Note(entry[2], {width = 172})
+            local button
+            button = keys:Button("", function()
+                if capturing and capturing.action == entry[1] then StopCapture() else StartCapture(entry[1], button) end
+            end, {same = true, width = 120, label = function()
+                return capturing and capturing.action == entry[1] and "Press a key..." or KeyText(entry[1])
+            end})
+            keys:Button("Clear", function() if A.BindKey(entry[1], nil) then A.RefreshOptions() end end, {same = true, width = 56})
+        end
+        keys:Note("Hide everything: every name and nameplate, Blizzard's too, and nothing else. Press again for exactly what you had. Enemy names: Blizzard's names over hostile NPCs; when shown, enemy players' names too, to spot enemies past nameplate range.")
+        keys:Button("", function() A.ToggleLabels() end,
+            {width = 200, label = function() return A.allHidden and "Bring everything back" or "Hide everything now" end})
+        keys:End()
     end
 end
 

@@ -2,6 +2,9 @@
 	<Binding name="FOREVERNAMES_TOGGLE_LABELS" category="BINDING_CATEGORY_FOREVERNAMES">
 		ForeverNames_ToggleLabels()
 	</Binding>
+	<Binding name="FOREVERNAMES_TOGGLE_ENEMY_NAMES" category="BINDING_CATEGORY_FOREVERNAMES">
+		ForeverNames_ToggleEnemyNames()
+	</Binding>
 	<Binding name="FOREVERNAMES_TOGGLE_LEVEL" category="BINDING_CATEGORY_FOREVERNAMES">
 		ForeverNames_ToggleLevel()
 	</Binding>

@@ -22,6 +22,7 @@ function A.SetOption(key, value)
         if A.UpdateWoundedEvents then A.UpdateWoundedEvents() end
         if A.UpdatePlayerEvents then A.UpdatePlayerEvents() end
     end
+    if key == "hideNativeHostileNames" then A.enemyPlayerNamesWanted = not value or nil end
     if key == "enabled" or key == "hideNativeNames" or key == "hideNativeHostileNames" or key == "hideNativePlayerNames" or key == "customizeGlobalFade" or key == "showFriendlyPlayers" then A.ApplyCVars() end
     A.Refresh()
 end

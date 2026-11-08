@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.13.0"
+A.version = "1.14.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -404,12 +404,10 @@ local function ScheduleQuestRefresh()
     end)
 end
 local RefreshOpacity
--- Key binding / "/fnames hide": fade every label out and back in.
-function A.ToggleLabels(hidden)
-    if hidden == nil then hidden = not A.labelsHidden end
+-- Fade every label out and back in (the hide-everything key, HideAll.lua).
+function A.FadeLabels(hidden)
     A.labelsHidden = hidden and true or nil
     RefreshOpacity()
-    print("Forever Names: labels " .. (A.labelsHidden and "hidden. Press the key again (or /fnames hide) to show them." or "shown."))
 end
 function RefreshOpacity()
     for _, record in pairs(active) do
@@ -430,6 +428,8 @@ local cvars = {nameplateShowFriendlyNpcs = "1", nameplateShowFriends = "1", name
 function A.ApplyCVars()
     if InCombatLockdown() then A.pendingCVars = true; return end
     A.pendingCVars = nil
+    -- Everything hidden (HideAll.lua): it puts your values back, then calls this.
+    if A.AllNamesHidden and A.AllNamesHidden() then return end
     db.previousCVars = db.previousCVars or {}
     for name, value in pairs(cvars) do
         local current = GetCVar(name)
@@ -453,6 +453,16 @@ function A.ApplyCVars()
             -- Do not overwrite a setting the player changed separately.
             if current == value then SetCVar(name, db.previousCVars[name]) end
             db.previousCVars[name] = nil
+        end
+    end
+    -- You chose to show enemy names (key or checkbox): enemy players' names
+    -- too, so every enemy reads from afar. Only on that choice, so a game
+    -- setting made elsewhere is kept otherwise. Never zeroed when hidden
+    -- (that blanks Blizzard's enemy plates).
+    if A.enemyPlayerNamesWanted then
+        A.enemyPlayerNamesWanted = nil
+        if db.enabled and not db.hideNativeHostileNames and GetCVar("UnitNameEnemyPlayerName") == "0" then
+            SetCVar("UnitNameEnemyPlayerName", "1")
         end
     end
     A.ApplyFadeCVars()
@@ -511,6 +521,8 @@ events:SetScript("OnEvent", function(_, event, arg)
         A.UpdatePlayerEvents()
         for _, name in ipairs({"PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "CVAR_UPDATE", "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED", "PLAYER_TARGET_CHANGED", "QUEST_LOG_UPDATE", "UNIT_FACTION", "UNIT_NAME_UPDATE", "MERCHANT_SHOW", "GOSSIP_SHOW", "QUEST_GREETING", "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE"}) do events:RegisterEvent(name) end
     elseif event == "PLAYER_LOGIN" then
+        -- Logged out with everything hidden: your values come back first.
+        if A.RestoreHiddenNames then A.RestoreHiddenNames() end
         A.ApplyCVars()
         if NamePlateDriverFrame and NamePlateDriverFrame.OnNamePlateAdded then
             A.nativeArrivalHook = true
@@ -681,6 +693,8 @@ SlashCmdList.FOREVERNAMES = function(message)
         A.SetEnemyTest(not A.enemyTest)
     elseif command == "hide" then
         A.ToggleLabels()
+    elseif command == "enemynames" then
+        ForeverNames_ToggleEnemyNames()
     elseif command == "blocked" then
         local list = type(db.blockedActions) == "table" and db.blockedActions or {}
         if #list == 0 then print("Forever Names: no blocked actions recorded.") end
@@ -739,7 +753,8 @@ end
 -- Key bindings (Bindings.xml): works with keyboard and gamepad alike, in their
 -- own section of Key Bindings (the settings look the category up in _G).
 BINDING_CATEGORY_FOREVERNAMES = "Forever Names"
-BINDING_NAME_FOREVERNAMES_TOGGLE_LABELS = "Hide or show names"
+BINDING_NAME_FOREVERNAMES_TOGGLE_LABELS = "Hide or show all names and nameplates"
+BINDING_NAME_FOREVERNAMES_TOGGLE_ENEMY_NAMES = "Show or hide enemy names"
 BINDING_NAME_FOREVERNAMES_TOGGLE_LEVEL = "Show or hide friendly levels"
 BINDING_NAME_FOREVERNAMES_TOGGLE_ENEMY_LEVEL = "Show or hide enemy levels"
 function ForeverNames_ToggleLevel()
@@ -751,6 +766,15 @@ function ForeverNames_ToggleEnemyLevel()
     if not A.db or not A.SetOption then return end
     A.SetOption("enemyShowLevel", not A.db.enemyShowLevel)
     print("Forever Names: enemy levels " .. (A.db.enemyShowLevel and "shown." or "hidden."))
+end
+-- Blizzard's names over hostile NPCs, plus enemy players' names when shown.
+function ForeverNames_ToggleEnemyNames()
+    if not A.db or not A.SetOption then return end
+    if not A.db.enabled then print("Forever Names is turned off; enemy names follow your game settings."); return end
+    A.SetOption("hideNativeHostileNames", not A.db.hideNativeHostileNames)
+    local when = A.pendingCVars and " when combat ends."
+        or (A.AllNamesHidden and A.AllNamesHidden() and " when names come back.") or "."
+    print("Forever Names: enemy names " .. (A.db.hideNativeHostileNames and "hidden" or "shown") .. when)
 end
 function ForeverNames_ToggleLabels()
     if A.db and A.ToggleLabels then A.ToggleLabels() end
