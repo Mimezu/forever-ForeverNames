@@ -117,7 +117,7 @@ function M:GetTexture() return self.texture end
 function M:GetAtlas() return nil end
 function M:IsForbidden() return self.forbidden or false end
 function M:IsProtected() return self.protected or false end
-function M:CreateTexture() return object() end
+function M:CreateTexture() local t=object();self.textures=self.textures or {};self.textures[#self.textures+1]=t;return t end
 function M:CreateFontString(_,_,template) local f=object();f.template=template;return f end
 function M:SetOwner() end
 function M:ClearLines() self.lines={} end
@@ -178,6 +178,7 @@ C_TooltipInfo={GetUnit=function(u)
  local lines={{leftText=d.name}}
  if d.title then lines[#lines+1]={leftText=d.title} end
  lines[#lines+1]={type=47,leftText='Level 5'}
+ if d.questLine then lines[#lines+1]={type=8,leftText=d.questLine,completed=d.questDone} end
  return {lines=lines}
 end}
 C_NamePlate={GetNamePlateForUnit=function(u) assert(u:match('^nameplate%d+$'));lookups=lookups+1;return plates[u] end,GetNamePlates=function() return plates end}
@@ -202,7 +203,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','OptionsSkin.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','OptionsSkin.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -1964,6 +1965,73 @@ do
  C.SetOption('peopleRename',false);C.SetOption('peopleIcons',false);C.db.people={}
  A.Refresh();settle()
  UnitFullName,GetNormalizedRealmName=nil,nil
+end
+-- Quest enemies: a "!" left of attackable NPCs tied to an active quest (off by default).
+do
+ local related,questCalls={},0
+ C_QuestLog={UnitIsRelatedToActiveQuest=function(u) questCalls=questCalls+1;return related[u]==true end}
+ local function mark(plate)
+  for _,f in ipairs(frames) do
+   if f.parent==plate and f.textures and f.textures[1] and f.textures[1].texture==A.GlyphPath('exclaim') then return f end
+  end
+ end
+ local mob=spawn('nameplate160',{id='1601',name='Kobold Vermin',enemy=true})
+ local npc=spawn('nameplate161',{id='1611',name='Quest friend',cursor='Speak'})
+ settle()
+ equal(A.db.questMark,false,'quest marks start off')
+ related.nameplate160,related.nameplate161=true,true
+ emit('QUEST_LOG_UPDATE');settle()
+ equal(questCalls,0,'quest marks off: no quest lookups')
+ check(mark(mob)==nil,'quest marks off: nothing created')
+ A.SetOption('questMark',true);settle()
+ local holder=mark(mob)
+ check(holder and holder.shown,'quest mob gets the mark')
+ local texture=holder.textures[1]
+ equal(texture.texture,A.GlyphPath('exclaim'),'mark uses the ! glyph')
+ equal(texture.anchor[2],plates.nameplate160.UnitFrame.HealthBarsContainer,'mark sits left of the health bar')
+ equal(texture.anchor[1],'RIGHT','mark ends at the bar')
+ equal(texture.tint[1],1,'mark is quest yellow')
+ check(mark(npc)==nil,'friendly NPCs never get a quest mark')
+ check(state(plates.nameplate160.UnitFrame)==nil,'Blizzard keeps the quest mob plate')
+ related.nameplate160=false;emit('QUEST_LOG_UPDATE');settle()
+ equal(holder.shown,false,'mark goes away when the objective is done')
+ related.nameplate160=true;emit('QUEST_LOG_UPDATE');settle()
+ equal(holder.shown,true,'mark returns for a new quest')
+ local secretValue={}
+ local realSecret=issecretvalue
+ issecretvalue=function(v) return v==secretValue end
+ C_QuestLog.UnitIsRelatedToActiveQuest=function() return secretValue end
+ local fromBool
+ texture.SetAlphaFromBoolean=function(_,v,a,b) fromBool={v,a,b} end
+ emit('QUEST_LOG_UPDATE');settle()
+ check(fromBool and fromBool[1]==secretValue,'a secret answer goes straight to SetAlphaFromBoolean')
+ equal(holder.shown,true,'secret answer keeps the mark layer shown')
+ issecretvalue=realSecret;texture.SetAlphaFromBoolean=nil
+ -- No quest-unit API: unfinished quest objective lines in the tooltip data.
+ C_QuestLog=nil
+ units.nameplate160.questLine='Kobold Vermin slain: 3/10'
+ emit('QUEST_LOG_UPDATE');settle()
+ equal(holder.shown,true,'tooltip objective line marks the mob')
+ units.nameplate160.questDone=true
+ emit('QUEST_LOG_UPDATE');settle()
+ equal(holder.shown,false,'completed objective line removes the mark')
+ units.nameplate160.questDone=nil
+ emit('QUEST_LOG_UPDATE');settle()
+ emit('NAME_PLATE_UNIT_REMOVED','nameplate160')
+ equal(holder.shown,false,'plate removal hides the mark')
+ C_QuestLog={UnitIsRelatedToActiveQuest=function(u) questCalls=questCalls+1;return related[u]==true end}
+ spawn('nameplate160',units.nameplate160);settle()
+ holder=mark(plates.nameplate160)
+ equal(holder.shown,true,'mark returns when the plate comes back')
+ A.SetOption('questMark',false);settle()
+ equal(holder.shown,false,'turning the option off hides marks')
+ local before=questCalls
+ emit('QUEST_LOG_UPDATE');settle()
+ equal(questCalls,before,'option off again: no quest lookups')
+ emit('NAME_PLATE_UNIT_REMOVED','nameplate160');emit('NAME_PLATE_UNIT_REMOVED','nameplate161')
+ units.nameplate160,units.nameplate161,plates.nameplate160,plates.nameplate161=nil,nil,nil,nil
+ C_QuestLog=nil
+ settle()
 end
 A.db.enabled=false;A.ApplyCVars();A.Refresh()
 equal(A.targetHealthBar.shown,false,'addon disable also hides custom health')

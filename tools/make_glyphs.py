@@ -168,10 +168,18 @@ def swords(d):
     return left
 
 
+def exclaim(d):
+    # A bold exclamation mark: a bar that narrows toward the bottom, then a dot.
+    d.polygon([(176, 90), (336, 90), (292, 340), (220, 340)], fill=W)
+    d.ellipse((176, 10, 336, 170), fill=W)
+    d.ellipse((196, 382, 316, 502), fill=W)
+
+
 GLYPHS = {
     'heart': heart, 'star': star, 'sparkle': sparkle, 'diamond': diamond, 'dot': dot, 'ring': ring,
     'crown': crown, 'shield': shield, 'person': person, 'party': party, 'flower': flower, 'moon': moon,
     'sun': sun, 'leaf': leaf, 'flag': flag, 'check': check, 'note': note, 'fire': fire, 'swords': swords,
+    'exclaim': exclaim,
 }
 
 

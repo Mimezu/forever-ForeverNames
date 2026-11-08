@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.12.0"
+A.version = "1.13.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -210,8 +210,7 @@ end
 local function IsWorldPlateToken(unit)
     return Public(unit) and type(unit) == "string" and unit:match("^nameplate%d+$") ~= nil
 end
-function A.Update(unit)
-    if not db or not IsWorldPlateToken(unit) then return end
+local function UpdatePlate(unit)
     local plate = C_NamePlate.GetNamePlateForUnit(unit)
     if active[unit] then active[unit].plate = plate end
     if not plate or (plate.IsForbidden and plate:IsForbidden()) then return end
@@ -277,7 +276,13 @@ function A.Update(unit)
     if person and not role then return Read(UnitName, unit) ~= nil end
     -- Retry incomplete data a few times, then wait for an actual game event.
     return role ~= nil and Read(UnitName, unit) ~= nil and (title ~= nil or titleComplete)
-
+end
+function A.Update(unit)
+    if not db or not IsWorldPlateToken(unit) then return end
+    local complete = UpdatePlate(unit)
+    -- Quest enemies' "!" (QuestMarks.lua): Blizzard's plates, our own layer.
+    if A.UpdateQuestMark and active[unit] then A.UpdateQuestMark(unit, active[unit].plate) end
+    return complete
 end
 function A.Refresh()
     -- Full refresh is reserved for explicit settings/override changes.
@@ -538,6 +543,7 @@ events:SetScript("OnEvent", function(_, event, arg)
         local old = active[arg]
         active[arg] = nil
         local plate = old and old.plate
+        if A.HideQuestMark then A.HideQuestMark(plate) end
         if plate and not (plate.IsForbidden and plate:IsForbidden()) then
             local frame = plate.UnitFrame
             local state = frame and A.RenderStates[frame]

@@ -4,6 +4,17 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.13.0 Quest enemies
+
+- New option **Show ! beside enemies for your quests** (NPCs > Which NPCs,
+  card "Quest enemies"; off by default). A yellow ! sits left of the health bar
+  of hostile and neutral NPCs that belong to an active quest: kill targets and
+  mobs that drop quest items. It goes away when the objective is done.
+- Uses the client's `C_QuestLog.UnitIsRelatedToActiveQuest`; without it, falls
+  back to unfinished quest objective lines in the unit's tooltip data. Blizzard
+  keeps these plates; the ! is a separate layer (`QuestMarks.lua`).
+- Work only on plate arrival and quest-log updates; none while the option is off.
+
 ## 1.12.0 One settings window
 
 - The settings window is the one organized by who a setting is about:
