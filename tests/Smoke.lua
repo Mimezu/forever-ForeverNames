@@ -208,7 +208,7 @@ for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
 local cjFirst=#frames+1
-for _,file in ipairs({'Core.lua','Glyphs.lua','OptionsSkin.lua','ColorPicker.lua','People.lua','Characters.lua','GroupPrompt.lua','LoreData.lua','Lore.lua','Journal.lua','JournalBook.lua','JournalTellers.lua','JournalTale.lua','JournalWords.lua','JournalStyles.lua','JournalUI.lua','Plates.lua','API.lua','Options.lua'}) do assert(loadfile(cjRoot..file))('CompanionJournal',C) end
+for _,file in ipairs({'Core.lua','Glyphs.lua','OptionsSkin.lua','ColorPicker.lua','People.lua','Characters.lua','GroupPrompt.lua','LoreData.lua','Lore.lua','Journal.lua','JournalBook.lua','JournalTellers.lua','JournalTale.lua','JournalWords.lua','JournalStyles.lua','JournalUI.lua','Plates.lua','API.lua'}) do assert(loadfile(cjRoot..file))('CompanionJournal',C) end
 local cjEvents=frames[cjFirst]
 local originalUpdate=A.Update
 A.Update=function(...) updateCalls=updateCalls+1;return originalUpdate(...) end
@@ -658,159 +658,16 @@ do
  CompanionJournal_TagTarget()
  check(C.db.people['bound-faraway']~=nil,'key binding adds the target')
  units.target=nil
- -- Settings list shows people and removes with a confirming second click.
- C.OpenOptions();C.SelectPerson('player-homerealm')
- check(C.options.shown,'Companion Journal has its own window with the list')
- -- Social actions use the real name, and keep their recipient if rows are recycled.
- -- The menu is Companion Journal's own (Blizzard's menus taint the gamepad interface
- -- when opened from addon code): its rows are read from C.PersonMenu.
- do
-  local oldFriends,oldChat,oldParty=C_FriendList,ChatFrameUtil,C_PartyInfo
-  local calls={}
-  local function Menu()
-   local m={}
-   if not C.PersonMenu.open then return m end
-   for _,r in ipairs(C.PersonMenu.panel.rows) do
-    if r.shown and r.entry then
-     if r.entry.title then m.title=r.entry.title
-     elseif not r.entry.divider then m[#m+1]={label=r.entry.text,fn=r.entry.func,enabled=not r.entry.disabled} end
-    end
-   end
-   return m
-  end
-  C_FriendList={AddFriend=function(name) calls.friend=name end}
-  ChatFrameUtil={SendTell=function(name) calls.whisper=name end}
-  C_PartyInfo={InviteUnit=function(name) calls.invite=name end}
-  local row
-  for _,f in ipairs(frames) do if f.key=='player-homerealm' and f.detail then row=f end end
-  check(row and row.clicks[2]=='RightButtonUp','People row accepts right click')
-  row.scripts.OnClick(row,'LeftButton');check(not C.PersonMenu.open,'left click only selects')
-  C.CloseJournal()
-  row.scripts.OnDoubleClick(row,'LeftButton')
-  check(CompanionJournalBook and CompanionJournalBook:IsShown(),'double-click opens their journal')
-  equal(CompanionJournalBook.paper.atlas,'QuestBG-Parchment','companions: clean parchment')
-  do
-   local person=C.db.people[row.key]
-   local circle,faction=person.circle,person.faction
-   person.faction='Horde';C.RefreshJournal()
-   equal(CompanionJournalBook.paper.atlas,'QuestBG-Parchment','a Horde companion keeps the clean parchment')
-   person.circle,person.faction='rival','Alliance';C.RefreshJournal()
-   equal(CompanionJournalBook.paper.atlas,'QuestBG-Alliance','rivals get their faction paper')
-   person.circle,person.faction=circle,faction
-  end
-  C.CloseJournal()
-  row.scripts.OnClick(row,'RightButton')
-  local menu=Menu()
-  check(C.PersonMenu.open and C.PersonMenu.panel:IsShown() and C.PersonMenu.catcher:IsShown(),'right click opens the addon menu over a cover')
-  equal(#menu,4,'right click offers three social actions and the journal')
-  equal(menu[4].label,'Open journal','journal entry follows the social actions')
-  equal(menu.title,'Player-HomeRealm','menu identifies actual character despite display name')
-  check(next(calls)==nil,'opening menu performs no social action')
-  local key=row.key;row.key='bound-faraway'
-  for i=1,3 do local item=menu[i]; check(item.enabled,'available social action enabled');item.fn() end
-  menu[4].fn()
-  C.PersonMenu.Close()
-  check(CompanionJournalBook and CompanionJournalBook:IsShown(),'journal entry opens the journal')
-  -- A long entry wraps: the next entry starts below both of its lines.
-  do
-   local realChapters=C.JournalChapters
-   local long=string.rep('You completed a long list of quests together. ',3)
-   C.JournalChapters=function() return {{title='Day one',lines={{text=long,entry={}},{text='Short line.',entry={}}}}} end
-   C.RefreshJournal()
-   local lines=CompanionJournalBook.lines
-   check(lines[2].height>=2*14,'a wrapped entry is measured at its real width (two lines or more)')
-   equal(lines[3].anchor[3],lines[2].anchor[3]-lines[2].height-5,'the next entry starts below the wrapped one')
-   C.JournalChapters=realChapters
-  end
-  row.key=key
-  equal(calls.friend,'Player-HomeRealm','friend action keeps original character')
-  equal(calls.whisper,'Player-HomeRealm','whisper keeps original character')
-  equal(calls.invite,'Player-HomeRealm','invite keeps original character')
-  C.db.people['npc:987654']={name='Test NPC',npc=true}
-  C.OpenPersonMenu(row,'npc:987654');check(not C.PersonMenu.open,'NPC entries have no social menu')
-  C.OpenPersonMenu(row,'missing');check(not C.PersonMenu.open,'absent entries have no social menu')
-  C.OpenPersonMenu(row,row.key);check(C.PersonMenu.open,'the menu opens')
-  C.PersonMenu.catcher.scripts.OnKeyDown(C.PersonMenu.catcher,'ESCAPE')
-  check(not C.PersonMenu.open and not C.PersonMenu.catcher:IsShown(),'Escape closes the menu')
-  C.OpenPersonMenu(row,row.key);C.PersonMenu.catcher.scripts.OnMouseDown(C.PersonMenu.catcher)
-  check(not C.PersonMenu.open,'a click outside closes the menu')
-  InputUtil={IsGamepadUIEnabled=function() return true end}
-  C.OpenPersonMenu(row,row.key)
-  menu=Menu()
-  check(C.PersonMenu.open and #menu==4,'gamepad interface: the addon menu opens (it is not Blizzard menu code)')
-  check(menu[1].enabled and not menu[2].enabled and menu[3].enabled,'gamepad interface: Whisper off (it would focus chat from addon code), the rest on')
-  C.PersonMenu.Close()
-  InputUtil=nil
-  C.db.people['npc:987654']=nil
-  C_FriendList,ChatFrameUtil,C_PartyInfo=oldFriends,oldChat,oldParty
- end
- local optionsButton,listCard
- for _,f in ipairs(frames) do if f.text=='Options' and f.kind=='Button' then optionsButton=f end end
- optionsButton.scripts.OnClick()
- local optionsView
- for _,f in ipairs(frames) do if f.Text and f.Text.text=='Everyone I group with, as acquaintances' then optionsView=f.parent.parent end end
- check(optionsView and optionsView.shown,'People options open in the People tab')
- C.SelectPerson('player-homerealm')
- equal(optionsView.shown,false,'selecting a person returns to the list')
- local autoButton
- for _,f in ipairs(frames) do if f.text=='Auto' and f.kind=='Button' and f.anchor and f.anchor[2]==342 then autoButton=f end end
- local plus
- for _,f in ipairs(frames) do if f.text=='+' and f.anchor and f.anchor[2]==314 and f.anchor[3]==-112 then plus=f end end
- plus.scripts.OnClick()
- check(C.db.people['player-homerealm'].iconSize~=nil,'size + sets the icon size for this person')
- autoButton.scripts.OnClick()
- equal(C.db.people['player-homerealm'].iconSize,nil,'Auto clears it')
- local remove
- for _,f in ipairs(frames) do if f.text=='Remove' and f.kind=='Button' then remove=f end end
- C.SelectPerson('player-homerealm')
- remove.scripts.OnClick()
- check(C.db.people['player-homerealm']~=nil,'first Remove click only arms it')
- remove.scripts.OnClick()
- equal(C.db.people['player-homerealm'],nil,'second click removes')
- local nextSelected
- for _,f in ipairs(frames) do if f.key and f.detail and f.wash and f.wash.shown and f.shown then nextSelected=f.key end end
- check(nextSelected~=nil and nextSelected~='player-homerealm','after removing, another entry is selected')
- -- On a clean list: the next one, or the previous one at the end.
- local saved=C.db.people
- C.db.people={}
- C.AddPerson('Ann');C.AddPerson('Ben');C.AddPerson('Cal')
- local function selectedRow()
-  for _,f in ipairs(frames) do if f.key and f.detail and f.wash and f.wash.shown and f.shown then return f.key end end
- end
- C.SelectPerson('ben-homerealm')
- remove.scripts.OnClick();remove.scripts.OnClick()
- equal(selectedRow(),'cal-homerealm','removing selects the next entry')
- remove.scripts.OnClick();remove.scripts.OnClick()
- equal(selectedRow(),'ann-homerealm','at the end of the list the previous one is selected')
- -- Never add again from the editor, then Allow again from the Blocked view.
- C.db.people={};C.AddPerson('Dee');C.AddPerson('Eve')
- C.SelectPerson('dee-homerealm')
- local never,allow,showList
- for _,f in ipairs(frames) do
-  if f.kind=='Button' and f.text=='Never add again' then never=f end
-  if f.kind=='Button' and f.text=='Allow again' then allow=f end
-  if f.kind=='Button' and f.text=='Show the list' then showList=f end
- end
- never.scripts.OnClick()
- check(C.db.people['dee-homerealm']~=nil,'first Never add again click only arms it')
- never.scripts.OnClick()
- check(C.db.people['dee-homerealm']==nil and C.db.peopleBlocked['dee-homerealm'],'second click removes and blocks')
- equal(selectedRow(),'eve-homerealm','the next entry is selected')
- showList.scripts.OnClick()
- local blockedRow
- for _,f in ipairs(frames) do if f.key=='dee-homerealm' and f.detail and f.shown then blockedRow=f end end
- check(blockedRow~=nil,'the Blocked view lists blocked people')
- blockedRow.scripts.OnClick(blockedRow)
- allow.scripts.OnClick()
- equal(C.db.peopleBlocked['dee-homerealm'],nil,'Allow again unblocks')
- C.db.people=saved
+ -- (Companion Journal's list window is gone since its 1.16.0: the book's
+ -- people pages replace it, and Companion Journal's own tests cover them.)
+ C.RemovePerson('player-homerealm')
  settle()
  equal(state(pf).name.text,'Player','removed person renders normally again')
  for _,k in ipairs({'peopleRename','peopleIcons','peopleLastSeen','peopleMenu'}) do C.SetOption(k,false) end
  A.SetOption('iconsParty',false)
  C.db.people={};units.nameplate4.party=nil
  UnitFullName,GetNormalizedRealmName,UnitInParty,TooltipDataProcessor,Menu=nil,nil,nil,nil,nil
- A.CloseOptions=nil;A.options:Hide();C.options:Hide()
+ A.CloseOptions=nil;A.options:Hide()
  settle()
 end
 -- Icon colors can follow the class or the name; NPCs can join People.
@@ -859,31 +716,27 @@ do
  equal(npcPool[1].tint[1],state(tf).name.color[1],'NPC icon can follow the name color')
  units.target={id='821',name='Harbor Cat'}
  local added,addedKey=C.AddTargetPerson()
- C.options:Hide()
+ -- Companion Journal's book is not loaded here: /cj and Forever Names only
+ -- have to reach it.
+ local opened
+ local realBook,realPeople,realCard=C.OpenBook,C.OpenBookPeople,C.OpenPersonCard
+ C.OpenBook=function(key) opened={'book',key} end
+ C.OpenBookPeople=function(key,circle,mode) opened={'people',key,circle,mode} end
+ C.OpenPersonCard=function(key) opened={'card',key} end
  SlashCmdList.COMPANIONJOURNAL('')
- check(C.options.shown,'/cj opens Companion Journal')
- local function Picked()
-  for _,f in ipairs(frames) do if f.key==addedKey and f.wash and f.wash.shown and f.shown then return true end end
-  return false
- end
- check(Picked(),'with a target from the list, /cj opens straight to them')
- -- Window open: targeting someone from the list jumps to them; others change nothing.
- C.SelectPeopleCircle('companion')
- units.target={id='999',name='Stranger NPC'}
- local follow=C.optionsTargetFollower
- follow.scripts.OnEvent(follow,'PLAYER_TARGET_CHANGED')
- check(not Picked(),'targeting someone not in the list selects nobody')
- units.target={id='821',name='Harbor Cat'}
- follow.scripts.OnEvent(follow,'PLAYER_TARGET_CHANGED')
- check(Picked(),'targeting a list entry while the window is open jumps to it')
- C.options:Hide()
+ equal(opened and opened[1],'book','/cj opens the book')
  -- Forever Names' window: People is a link to Companion Journal, and the
  -- window reopens on the page you used last.
  A.db.optionsPage=2;A.options:Hide();SlashCmdList.FOREVERNAMES('')
  equal(A.db.optionsPage,2,'Forever Names reopens on the last page')
- SlashCmdList.FOREVERNAMES('people')
- check(C.options.shown,'/fnames people opens Companion Journal')
- C.options:Hide();A.options:Hide()
+ opened=nil;SlashCmdList.FOREVERNAMES('people')
+ equal(opened and opened[1],'people',"/fnames people opens the book's people pages")
+ opened=nil;CompanionJournalAPI.Open('rival')
+ equal(opened and opened[3],'rival','the API opens a category')
+ opened=nil;CompanionJournalAPI.Open(addedKey)
+ check(opened and opened[1]=='card' and opened[2]==addedKey,"the API opens a person's card")
+ C.OpenBook,C.OpenBookPeople,C.OpenPersonCard=realBook,realPeople,realCard
+ A.options:Hide()
  units.target={id='821',name='Harbor Cat'}
  equal(addedKey,'npc:821','Add my target also takes NPCs')
  equal(added.npc,true,'NPC entries are marked')
@@ -924,11 +777,6 @@ do
  check(brin.met~=nil,'acquaintances remember when they were met')
  equal(C.PersonCircle(C.db.people['player-homerealm']),'companion','companions are never demoted')
  equal(C.IconGlyph('people',brin),'none','acquaintances start without an icon')
- -- The list shows one category at a time.
- C.OpenOptions();C.SelectPerson('brin-homerealm')
- local visible={}
- for _,f in ipairs(frames) do if f.key and f.shown and f.kind=='Button' then visible[f.key]=true end end
- check(visible['brin-homerealm'] and not visible['player-homerealm'],'Acquaintances tab lists only acquaintances')
  C.MovePerson('brin-homerealm','companion')
  equal(C.PersonCircle(brin),'companion','acquaintance moved to companions')
  C.MovePerson('brin-homerealm','acquaintance')
