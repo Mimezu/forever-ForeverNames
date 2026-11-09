@@ -431,8 +431,10 @@ do
  for _,f in ipairs(frames) do if f.events.FRIENDLIST_UPDATE then friendDriver=f end end
  check(friendDriver~=nil,'friend icons subscribe to friend-list changes')
  -- A roster burst refreshes player plates once, after a short delay.
+ -- Companion Journal (loaded after us) has its own roster frames: pick ours,
+ -- the one that also follows guild changes for the guild icon.
  local iconDriver
- for _,f in ipairs(frames) do if f.events.GROUP_ROSTER_UPDATE then iconDriver=f end end
+ for _,f in ipairs(frames) do if f.events.GROUP_ROSTER_UPDATE and f.events.PLAYER_GUILD_UPDATE then iconDriver=f end end
  check(iconDriver~=nil,'group icons subscribe to roster changes')
  local before=updateCalls
  for i=1,10 do iconDriver.scripts.OnEvent(iconDriver,'GROUP_ROSTER_UPDATE') end
