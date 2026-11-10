@@ -203,7 +203,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','PlateClicks.lua','PlateClickProbe.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','PlateClicks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -1930,81 +1930,6 @@ do
  equal(label.hit,labelArea,'and nothing is given back that was never taken')
  emit('NAME_PLATE_UNIT_REMOVED','nameplate170');emit('NAME_PLATE_UNIT_REMOVED','nameplate171')
  units.nameplate170,units.nameplate171,plates.nameplate170,plates.nameplate171=nil,nil,nil,nil
- settle()
-end
--- The camera-drag probe (/fnames clicks): silent until asked, then it measures and tries three removals.
-do
- local function hit(plate,frame)
-  local native={{point='TOPLEFT',relativeTo=frame.name}}
-  plate.hit=native
-  function plate:CanChangeHitTestPoints() return true end
-  function plate:GetHitTestPoints() return self.hit end
-  function plate:ClearAllHitTestPoints() self.hit={} end
-  function plate:SetHitTestPoints(points) self.hit=points end
-  function frame:GetNamePlateFrame() return plate end
-  function frame:UpdateHitTestArea() plate.hit=native end
-  return native
- end
- local plate,pf=spawn('nameplate180',{id='1801',name='Probe mob',enemy=true})
- settle()
- local area=hit(plate,pf)
- equal(A.db.clickProbe,nil,'the probe writes nothing until it is asked')
- local insets={[0]={1,2,3,4},[1]={5,6,7,8}}
- Enum.NamePlateType={Friendly=0,Enemy=1}
- C_NamePlateManager={GetNamePlateHitTestInsets=function(kind) return unpack(insets[kind]) end,
-  SetNamePlateHitTestInsets=function(kind,...) insets[kind]={...} end}
- SlashCmdList.FOREVERNAMES('clicks')
- check(type(A.db.clickProbe)=='table' and #A.db.clickProbe>3,'the report is kept for the saved file')
- local text=table.concat(A.db.clickProbe,'|')
- check(text:find('setting=all',1,true) and text:find('insets Friendly=1.0,2.0,3.0,4.0 Enemy=5.0,6.0,7.0,8.0',1,true),'the report holds the setting and the insets')
- equal(plate.hit,area,'a report changes nothing')
- SlashCmdList.FOREVERNAMES('clicks 1')
- equal(#plate.hit,0,'test 1 clears the area')
- pf:UpdateHitTestArea()
- equal(#plate.hit,0,'and again when Blizzard sets it')
- SlashCmdList.FOREVERNAMES('clicks 2')
- check(#plate.hit==2 and plate.hit[1].relativeTo==plate and plate.hit[1].offsetY>1000,'test 2 moves the area off the plate')
- SlashCmdList.FOREVERNAMES('clicks 3')
- equal(plate.hit,area,"test 3: the plate has the game's area again")
- equal(insets[1][1],10000,'and the insets shrink it')
- check(A.db.clickProbeInsets and A.db.clickProbeInsets.Enemy[4]==8,"the game's insets are kept for the way back")
- SlashCmdList.FOREVERNAMES('clicks 0')
- check(insets[0][1]==1 and insets[1][4]==8,'test off: the insets are back')
- equal(A.db.clickProbeInsets,nil,'nothing kept')
- equal(plate.hit,area,'the area is back')
- -- Once armed, every left or right press is recorded with what the camera did half a second later.
- local watcher
- for _,f in ipairs(frames) do if f.events and f.events.GLOBAL_MOUSE_DOWN then watcher=f end end
- check(watcher,'the probe listens for mouse presses once it is asked')
- local cursor=100
- function GetCursorPosition() return cursor,50 end
- function IsMouseButtonDown() return true end
- function IsMouselooking() return false end
- function plate:IsMouseOver() return true end
- local before=#A.db.clickProbe
- watcher.scripts.OnEvent(watcher,'GLOBAL_MOUSE_DOWN','RightButton');cursor=180;settle()
- equal(#A.db.clickProbe,before+1,'one line per press')
- local line=A.db.clickProbe[#A.db.clickProbe]
- check(line:find('RIGHT test=0 on plate nameplate180 points=1',1,true) and line:find('held=true cursor moved=true mouselook=false',1,true),'the press line says where it landed and that the cursor ran free')
- watcher.scripts.OnEvent(watcher,'GLOBAL_MOUSE_DOWN','MiddleButton');settle()
- equal(#A.db.clickProbe,before+1,'other buttons are ignored')
- GetCursorPosition,IsMouseButtonDown,IsMouselooking,plate.IsMouseOver=nil,nil,nil,nil
- -- A test started from another setting waits for the plates to settle first.
- A.SetOption('plateClicks','none');settle()
- SlashCmdList.FOREVERNAMES('clicks 2');settle()
- equal(A.db.plateClicks,'all','the setting steps aside for a test')
- check(#plate.hit==2 and plate.hit[1].offsetY>1000,'and the test holds after the refresh')
- SlashCmdList.FOREVERNAMES('clicks 0');settle()
- equal(plate.hit,area,'off again')
- -- A plate that refuses, or has no such methods: reported, never an error.
- function plate:ClearAllHitTestPoints() error('blocked') end
- SlashCmdList.FOREVERNAMES('clicks 1')
- check(table.concat(A.db.clickProbe,'|'):find('blocked',1,true),'a refusal is counted with its reason')
- SlashCmdList.FOREVERNAMES('clicks 0')
- C_NamePlateManager=nil
- SlashCmdList.FOREVERNAMES('clicks 3');SlashCmdList.FOREVERNAMES('clicks 0');SlashCmdList.FOREVERNAMES('clicks what')
- emit('NAME_PLATE_UNIT_REMOVED','nameplate180')
- units.nameplate180,plates.nameplate180=nil,nil
  settle()
 end
 -- Quest enemies: a "!" left of attackable NPCs tied to an active quest (off by default).

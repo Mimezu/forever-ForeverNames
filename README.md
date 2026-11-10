@@ -4,21 +4,17 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
-## 1.16.1 Probe for the camera drag bug (temporary)
+## 1.16.2 Camera drag bug: found, not in Forever Names
 
-- The 1.16.0 setting below changes nothing in game: with any of its three
-  choices a drag that starts on a nameplate or on a name still does not move
-  the camera. Its cause was read from Blizzard's code and never measured.
-- `/fnames clicks` measures. It prints what the game reports for the
-  nameplate under the mouse, and from then on records every left or right
-  press: what was under the mouse and, half a second later, whether the
-  camera took the drag.
-- `/fnames clicks 1`, `2`, `3` try three ways of removing the clickable area
-  on every nameplate (clear it, move it off the plate, shrink it with the
-  game-wide insets); `/fnames clicks 0` puts the game's own areas back.
-- Everything is also kept in the saved settings (`clickProbe`), written on
-  `/reload`. Nothing runs until the command is typed. The probe and, if it
-  cannot be made to work, the 1.16.0 setting will be removed.
+- The 1.16.1 probe (`/fnames clicks`) showed the cause: the nameplates' unit
+  frames had their mouse turned on (Blizzard keeps it off), so a press on a
+  plate neither selected the unit nor started a camera drag. BindCards did
+  that: it installed its mouseover key handler on nameplates as on party
+  frames. Fixed in BindCards 0.4.45. It happened with Forever Names off too.
+- The probe is removed, with its command and its saved log.
+- The 1.16.0 setting below stays for now. Its three choices could not do
+  anything while the plates swallowed the mouse; it is to be checked again in
+  game with the BindCards fix, and removed if it is not needed.
 
 ## 1.16.0 Camera drag on nameplates
 
@@ -36,7 +32,7 @@ and ships off, so with all of them off the addon behaves exactly like 1.6.1.
   or interact. Click the character itself; that always works.
 - In combat the game only lets an addon change a plate as it appears, so a
   change of this setting made in combat finishes when combat ends.
-- Checked in game: no effect (see 1.16.1).
+- Checked in game with BindCards 0.4.44: no effect (see 1.16.2 for why).
 
 ## 1.15.0 Settings window, layout B (to try)
 

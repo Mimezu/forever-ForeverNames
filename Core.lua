@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.16.1"
+A.version = "1.16.2"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -494,6 +494,8 @@ events:SetScript("OnEvent", function(_, event, arg)
         if arg ~= addonName then return end
         ForeverNamesDB = type(ForeverNamesDB) == "table" and ForeverNamesDB or {}
         db = ForeverNamesDB
+        -- Left behind by the 1.16.1 camera-drag probe.
+        db.clickProbe, db.clickProbeInsets = nil, nil
         for key, value in pairs(A.defaults) do
             if key ~= "colors" and db[key] == nil then db[key] = value end
         end
@@ -754,9 +756,6 @@ SlashCmdList.FOREVERNAMES = function(message)
         db.overrides[id] = command ~= "auto" and override or nil
         A.Refresh()
         print("Forever Names:", UnitName("target"), "=", override)
-    elseif command == "clicks" then
-        -- Temporary probe for the camera-drag bug (PlateClickProbe.lua).
-        if A.PlateClickProbe then A.PlateClickProbe(message:match("^%s*%S+%s+(%S+)")) end
     elseif command == "layout" then
         local which = message:lower():match("^%s*%S+%s+([ab])%s*$")
         if which and A.SetOptionsLayout then
