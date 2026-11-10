@@ -4,35 +4,15 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
-## 1.16.2 Camera drag bug: found, not in Forever Names
+## 1.16.3 Camera drag bug: found, not in Forever Names
 
-- The 1.16.1 probe (`/fnames clicks`) showed the cause: the nameplates' unit
-  frames had their mouse turned on (Blizzard keeps it off), so a press on a
-  plate neither selected the unit nor started a camera drag. BindCards did
-  that: it installed its mouseover key handler on nameplates as on party
-  frames. Fixed in BindCards 0.4.45. It happened with Forever Names off too.
-- The probe is removed, with its command and its saved log.
-- The 1.16.0 setting below stays for now. Its three choices could not do
-  anything while the plates swallowed the mouse; it is to be checked again in
-  game with the BindCards fix, and removed if it is not needed.
-
-## 1.16.0 Camera drag on nameplates
-
-- The cause: where a nameplate can be clicked, the game selects the unit on
-  the press and never starts a camera drag there, with either mouse button.
-  That clickable area is the game's own, around the name and the health bar,
-  and it stayed in place, invisible, under every name this addon draws.
-- New: **All names > Text & tools > Mouse on nameplates > Click to select**.
-  - **Names and bars** (default): as before, the game's behavior.
-  - **Bars only**: the names this addon draws let the mouse through, so a
-    drag that starts on one moves the camera. Blizzard's health-bar plates
-    (enemies, and our names on their bars) still select on a click.
-  - **Off**: every nameplate lets the mouse through.
-- The trade: a plate that lets the mouse through cannot be clicked to select
-  or interact. Click the character itself; that always works.
-- In combat the game only lets an addon change a plate as it appears, so a
-  change of this setting made in combat finishes when combat ends.
-- Checked in game with BindCards 0.4.44: no effect (see 1.16.2 for why).
+- A press on a nameplate neither selected the unit nor moved the camera. The
+  cause was BindCards: it installed its mouseover key handler on nameplates,
+  which turned their mouse on (Blizzard keeps it off). Fixed in BindCards
+  0.4.45 and confirmed in game. It happened with Forever Names off too.
+- Removed again, since they were only attempts at this bug: the 1.16.0
+  setting "Mouse on nameplates > Click to select" (it never had an effect)
+  and the 1.16.1 probe `/fnames clicks`. Their saved keys are dropped.
 
 ## 1.15.0 Settings window, layout B (to try)
 
