@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.15.0"
+A.version = "1.16.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -283,6 +283,8 @@ function A.Update(unit)
     local complete = UpdatePlate(unit)
     -- Quest enemies' "!" (QuestMarks.lua): Blizzard's plates, our own layer.
     if A.UpdateQuestMark and active[unit] then A.UpdateQuestMark(unit, active[unit].plate) end
+    -- Click-through nameplates (PlateClicks.lua; nothing happens while the option is off).
+    if A.UpdatePlateClicks and active[unit] then A.UpdatePlateClicks(active[unit].plate, unit) end
     return complete
 end
 function A.Refresh()
@@ -372,6 +374,11 @@ local function TrackPlate(unit, initialized)
                 if A.PrimePlate(plate.UnitFrame, unit) then state.plate, state.primed = plate, true end
             end
         end
+    end
+    -- Click-through nameplates: the arrival tick is the one moment in combat
+    -- when the game lets an addon change a plate's clickable area.
+    if (initialized or not A.nativeArrivalHook) and A.UpdatePlateClicks and db and db.plateClicks ~= "all" then
+        A.UpdatePlateClicks(C_NamePlate.GetNamePlateForUnit(unit), unit)
     end
     if fresh then QueueUnit(unit, true) end
 end
@@ -557,6 +564,7 @@ events:SetScript("OnEvent", function(_, event, arg)
         active[arg] = nil
         local plate = old and old.plate
         if A.HideQuestMark then A.HideQuestMark(plate) end
+        if A.ForgetPlateClicks then A.ForgetPlateClicks(plate) end
         if plate and not (plate.IsForbidden and plate:IsForbidden()) then
             local frame = plate.UnitFrame
             local state = frame and A.RenderStates[frame]

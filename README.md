@@ -4,6 +4,24 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.16.0 Camera drag on nameplates
+
+- The cause: where a nameplate can be clicked, the game selects the unit on
+  the press and never starts a camera drag there, with either mouse button.
+  That clickable area is the game's own, around the name and the health bar,
+  and it stayed in place, invisible, under every name this addon draws.
+- New: **All names > Text & tools > Mouse on nameplates > Click to select**.
+  - **Names and bars** (default): as before, the game's behavior.
+  - **Bars only**: the names this addon draws let the mouse through, so a
+    drag that starts on one moves the camera. Blizzard's health-bar plates
+    (enemies, and our names on their bars) still select on a click.
+  - **Off**: every nameplate lets the mouse through.
+- The trade: a plate that lets the mouse through cannot be clicked to select
+  or interact. Click the character itself; that always works.
+- In combat the game only lets an addon change a plate as it appears, so a
+  change of this setting made in combat finishes when combat ends.
+- Not yet checked in game.
+
 ## 1.15.0 Settings window, layout B (to try)
 
 - The footer has a **Layout A | B** switch (also `/fnames layout a` / `b`).

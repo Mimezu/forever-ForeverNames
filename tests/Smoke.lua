@@ -203,7 +203,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','PlateClicks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -1860,6 +1860,77 @@ do
  A.db.optionsLayout='a';A.CreateOptions()
  equal(A.options,ForeverNamesOptions,'and A again')
  A.db.optionsPage=page
+end
+-- Click-through nameplates: the game's clickable area on each plate (untouched by default).
+do
+ local function hit(plate,frame)
+  local native={{point='TOPLEFT',relativeTo=frame.name}}
+  plate.hit,plate.canChange,plate.hitWrites=native,true,0
+  function plate:CanChangeHitTestPoints() return self.canChange end
+  function plate:GetHitTestPoints() return self.hit end
+  function plate:ClearAllHitTestPoints() assert(self.canChange,'hit-test change blocked');self.hit={};self.hitWrites=self.hitWrites+1 end
+  function plate:SetHitTestPoints(points) assert(self.canChange,'hit-test change blocked');self.hit=points;self.hitWrites=self.hitWrites+1 end
+  function frame:GetNamePlateFrame() return plate end
+  function frame:UpdateHitTestArea() plate.hit=native end -- Blizzard sets its own area again
+  return native
+ end
+ local label,lf=spawn('nameplate170',{id='1701',name='Click vendor',cursor='Buy',title='General Goods'})
+ local mob,mf=spawn('nameplate171',{id='1711',name='Click mob',enemy=true})
+ settle()
+ local labelArea,mobArea=hit(label,lf),hit(mob,mf)
+ equal(A.defaults.plateClicks,'all','nameplate clicks start as the game has them')
+ A.Refresh();settle()
+ equal(label.hitWrites+mob.hitWrites,0,'default: the clickable areas are never touched')
+ lf:UpdateHitTestArea()
+ equal(label.hit,labelArea,'default: nothing hooked either')
+ A.SetOption('plateClicks','bars');settle()
+ check(state(lf) and not state(lf).keepBars,'the vendor is one of our plain names')
+ equal(#label.hit,0,'bars only: our name lets the mouse through')
+ equal(mob.hit,mobArea,"bars only: Blizzard's plate keeps its click")
+ equal(mob.hitWrites,0,'and is not written to')
+ lf:UpdateHitTestArea()
+ equal(#label.hit,0,'Blizzard sets the area again: removed again in the same call')
+ A.SetOption('plateClicks','none');settle()
+ equal(#mob.hit,0,"off: Blizzard's plate lets the mouse through too")
+ equal(#label.hit,0,'and our name still does')
+ -- In combat the game refuses the change: no error, and it is done when combat ends.
+ mob.canChange=false
+ A.SetOption('plateClicks','all');settle()
+ equal(label.hit,labelArea,"back to the game's behavior: the area returns")
+ equal(#mob.hit,0,'a refused change waits')
+ mob.canChange=true;emit('PLAYER_REGEN_ENABLED');settle()
+ equal(mob.hit,mobArea,'and is made when combat ends')
+ local writes=label.hitWrites+mob.hitWrites
+ A.Refresh();settle()
+ equal(label.hitWrites+mob.hitWrites,writes,'nothing left to do: no more writes')
+ -- A plate that arrives is handled on that tick (the one moment combat allows it).
+ A.SetOption('plateClicks','none');settle()
+ emit('NAME_PLATE_UNIT_REMOVED','nameplate171')
+ local second={{point='TOPLEFT',relativeTo=mf.name}}
+ mob.hit=second
+ emit('NAME_PLATE_UNIT_ADDED','nameplate171');NamePlateDriverFrame:OnNamePlateAdded('nameplate171')
+ equal(#mob.hit,0,'arrival: the area is removed before the queue runs')
+ -- Unit frames are pooled: another frame on the plate means Blizzard set a fresh area.
+ local other=object();other.unit='nameplate171'
+ local third={{point='TOPLEFT',relativeTo=other}}
+ mob.UnitFrame=other;mob.hit=third
+ A.Update('nameplate171')
+ equal(#mob.hit,0,'a new unit frame: its area is removed too')
+ A.SetOption('plateClicks','all');settle()
+ equal(mob.hit,third,"and the area given back is the new one, not the old frame's")
+ mob.UnitFrame=mf
+ -- The API lies or is missing: never an error.
+ A.SetOption('plateClicks','none');settle()
+ emit('NAME_PLATE_UNIT_REMOVED','nameplate170')
+ label.hit=labelArea
+ function label:ClearAllHitTestPoints() error('refused') end
+ emit('NAME_PLATE_UNIT_ADDED','nameplate170');NamePlateDriverFrame:OnNamePlateAdded('nameplate170');settle()
+ equal(label.hit,labelArea,'a refused removal leaves the plate as it was')
+ A.SetOption('plateClicks','all');settle()
+ equal(label.hit,labelArea,'and nothing is given back that was never taken')
+ emit('NAME_PLATE_UNIT_REMOVED','nameplate170');emit('NAME_PLATE_UNIT_REMOVED','nameplate171')
+ units.nameplate170,units.nameplate171,plates.nameplate170,plates.nameplate171=nil,nil,nil,nil
+ settle()
 end
 -- Quest enemies: a "!" left of attackable NPCs tied to an active quest (off by default).
 do

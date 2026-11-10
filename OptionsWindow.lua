@@ -1034,6 +1034,13 @@ local function BuildAll(kit, view, index)
             {more = perfNote})
         perf:Note(perfNote, {classic = true})
         perf:End()
+        -- PlateClicks.lua
+        local clicks = left:Card("Mouse on nameplates")
+        local clicksNote = "Where a nameplate can be clicked, the game selects it and cannot start a camera drag there. Bars only: our names let the mouse through. Off: every nameplate does. Clicking the character itself always selects."
+        clicks:Seg("Click to select", {{"Names and bars", "all"}, {"Bars only", "bars"}, {"Off", "none"}},
+            function() return db.plateClicks end, function(v) A.SetOption("plateClicks", v) end, {wide = true, more = clicksNote})
+        clicks:Note(clicksNote, {classic = true})
+        clicks:End()
         local keys = right:Card("Keys")
         keys:Note("Click a button, then press the key you want (Shift, Ctrl or Alt allowed). Esc cancels.")
         for _, entry in ipairs(KEY_ACTIONS) do
