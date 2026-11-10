@@ -2,11 +2,10 @@ local _, A = ...
 -- Settings window: organized by who a setting is about, not by when it was
 -- added. Tabs: Players, Enemies, NPCs, All names. Players and Enemies use the
 -- same cards in the same places, under a live preview.
-local W, H = 860, 580
-local H_B = 600 -- layout B: roomier rows
+local W, H = 860, 600
 local TAB_SCALE = 0.9
-local GOLD, NOTE, DIM = {1, 0.82, 0}, {0.80, 0.77, 0.70}, {0.5, 0.5, 0.5}
-local ROW, GAP = 24, 8
+local NOTE, DIM = {0.80, 0.77, 0.70}, {0.5, 0.5, 0.5}
+local ROW = 24
 local PREVIEW_H = 80
 local RANGES = {{"All", "all"}, {"10 yd", "near3"}, {"15 yd", "near15"}, {"28 yd", "near4"}, {"Target", "target"}}
 local RANGE_OF = {near3 = 3, near15 = 15, near4 = 4}
@@ -67,14 +66,8 @@ local function NewKit(frame)
         owner:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
     end
     kit.Tooltip = Tooltip
-    local function Wash(button)
-        button.wash = button:CreateTexture(nil, "ARTWORK")
-        button.wash:SetPoint("TOPLEFT", 4, -4); button.wash:SetPoint("BOTTOMRIGHT", -4, 4)
-        button.wash:SetColorTexture(1, 0.72, 0.2, 0.2)
-    end
-    local function ButtonWidth(text) return math.max(28, Width("GameFontNormal", text) + 18) end
 
-    -- Cards: stacked in a column, each filled row by row ----------------------------
+    -- A bare row of controls (page headers); the cards are in OptionsModern.lua ------
     local Card = {}
     Card.__index = Card
     -- The next control goes on a new row, unless o.same (to the right of the last).
@@ -116,182 +109,13 @@ local function NewKit(frame)
         end)
         return check
     end
-    -- One of several choices: choices = {{text, value}, ...}
-    function Card:Seg(label, choices, get, set, o)
-        o = o or {}
-        local labelWidth = label and (Width("GameFontHighlightSmall", label) + 8) or 0
-        local total = labelWidth
-        local widths = {}
-        for i, choice in ipairs(choices) do widths[i] = choice[3] or ButtonWidth(choice[1]); total = total + widths[i] + 3 end
-        local swatchWidth = o.swatch and 34 or 0
-        -- Too wide for the card: the label gets its own line above the buttons.
-        if label and not o.same and 12 + (o.indent and 24 or 0) + total + swatchWidth > self.width - 8 then
-            local lx, ly = self:Slot(o, 0)
-            Text(self.frame, label, lx, -ly - 2, "GameFontHighlightSmall", nil, o.labelColor)
-            self:Advance(0, 18)
-            total = total - labelWidth
-            label, labelWidth = nil, 0
-        end
-        local x, y = self:Slot(o, total + swatchWidth)
-        local start = x
-        if label then Text(self.frame, label, x, -y - 5, "GameFontHighlightSmall", nil, o.labelColor) end
-        x = x + labelWidth
-        local buttons = {}
-        for i, choice in ipairs(choices) do
-            local button = Button(self.frame, choice[1], x, -y - 1, widths[i], function() set(choice[2]) end)
-            Wash(button)
-            buttons[i] = button
-            x = x + widths[i] + 3
-        end
-        local swatch
-        if o.swatch then
-            swatch = Button(self.frame, "", x + 3, -y - 1, 30, function(button) o.swatch.pick(button) end)
-            swatch.color = swatch:CreateTexture(nil, "ARTWORK")
-            swatch.color:SetPoint("TOPLEFT", 6, -5); swatch.color:SetPoint("BOTTOMRIGHT", -6, 5)
-            Tooltip(swatch, "Choose the color.")
-        end
-        self.x = start + total + swatchWidth
-        self.rowH = math.max(self.rowH, ROW)
-        self.x = self.x + 12
-        On(function()
-            local current, enabled = get(), self:Enabled(o)
-            for i, choice in ipairs(choices) do
-                local button, selected = buttons[i], choice[2] == current
-                button.wash:SetShown(selected)
-                button:SetEnabled(enabled)
-                if selected then button:GetFontString():SetTextColor(unpack(GOLD)) else button:GetFontString():SetTextColor(0.9, 0.9, 0.9) end
-            end
-            if swatch then
-                swatch:SetEnabled(enabled)
-                swatch.color:SetColorTexture(unpack(o.swatch.color()))
-                swatch.color:SetAlpha(enabled and (current == "custom" and 1 or 0.35) or 0.25)
-            end
-        end)
-        return buttons, total + swatchWidth
-    end
-    -- Match name / Class / Custom (+ swatch): the one color control everywhere.
-    function Card:Color(label, get, set, pick, color, o)
-        o = o or {}
-        o.swatch = {pick = pick, color = color}
-        return self:Seg(label, o.choices or COLOR_MODES, get, set, o)
-    end
-    -- [-] value [+] and an optional Auto button (only sizes that can be automatic).
-    function Card:Step(label, text, onStep, o)
-        o = o or {}
-        local labelWidth = o.labelWidth or (Width("GameFontHighlightSmall", label) + 8)
-        local valueWidth = o.valueWidth or 44
-        local total = labelWidth + 24 + valueWidth + 24 + (o.auto and 60 or 0)
-        local x, y = self:Slot(o, total)
-        Text(self.frame, label, x, -y - 5, "GameFontHighlightSmall")
-        local stepper = {}
-        stepper.minus = Button(self.frame, "-", x + labelWidth, -y - 1, 24, function() onStep(-1) end)
-        stepper.value = self.frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-        stepper.value:SetPoint("TOPLEFT", x + labelWidth + 24, -y - 5)
-        stepper.value:SetWidth(valueWidth); stepper.value:SetJustifyH("CENTER")
-        stepper.plus = Button(self.frame, "+", x + labelWidth + 24 + valueWidth, -y - 1, 24, function() onStep(1) end)
-        local auto
-        if o.auto then
-            auto = Button(self.frame, "Auto", x + labelWidth + 48 + valueWidth + 6, -y - 1, 50, o.auto.reset)
-            Tooltip(auto, o.auto.tip or "Automatic size.")
-        end
-        self.x = x + total
-        self:Advance(0, ROW)
-        On(function()
-            local enabled = self:Enabled(o)
-            stepper.minus:SetEnabled(enabled); stepper.plus:SetEnabled(enabled)
-            stepper.value:SetText(text())
-            if enabled and (not o.auto or not o.auto.isAuto()) then stepper.value:SetTextColor(1, 1, 1) else stepper.value:SetTextColor(unpack(DIM)) end
-            if auto then auto:SetEnabled(enabled and not o.auto.isAuto()) end
-        end)
-        return stepper
-    end
-    function Card:Note(text, o)
-        o = o or {}
-        local x, y = self:Slot(o, 0)
-        local width = o.width or (self.width - x - 14)
-        local note = Text(self.frame, text, x, -y - 2, "GameFontHighlightSmall", width, NOTE)
-        local height = note.GetStringHeight and note:GetStringHeight() or 14
-        self:Advance(width, math.max(14, height) + 4)
-        if o.when then On(function() note:SetTextColor(unpack(o.when() and NOTE or DIM)) end) end
-        return note
-    end
-    function Card:Button(text, onClick, o)
-        o = o or {}
-        local width = o.width or (ButtonWidth(text) + 10)
-        local x, y = self:Slot(o, width)
-        local button = Button(self.frame, text, x, -y - 1, width, onClick)
-        if o.tip then Tooltip(button, o.tip) end
-        self:Advance(width, ROW)
-        On(function()
-            button:SetEnabled(self:Enabled(o))
-            if o.label then button:SetText(o.label()) end
-        end)
-        return button
-    end
-    -- A row the page fills itself: returns its frame, and where a first control goes.
-    function Card:Custom(width, height)
-        local x, y = self:Slot({}, 0)
-        self:Advance(width, height)
-        return self.frame, x, y
-    end
-    function Card.Gap() end -- layout B only
-    function Card:End()
-        local height = self.y + self.rowH + 10
-        self.frame:SetHeight(height)
-        local card, width = self.frame, self.width
-        Line(card, 0, 0, width, 1, 0.55); Line(card, 0, -height + 1, width, 1, 0.3)
-        Line(card, 0, 0, 1, height, 0.3); Line(card, width - 1, 0, 1, height, 0.3)
-        self.col.y = self.col.y + height + GAP
-        return height
-    end
-    function kit.Column(parent, x, width)
-        local col = {parent = parent, x = x, width = width, y = 0}
-        function col:Card(title, enabledFn, tip)
-            local card = setmetatable({col = self, width = width, enabledFn = enabledFn, x = 12, rowH = 0}, Card)
-            card.frame = CreateFrame("Frame", nil, parent)
-            card.frame:SetPoint("TOPLEFT", x, -self.y)
-            card.frame:SetWidth(width)
-            local wash = card.frame:CreateTexture(nil, "BACKGROUND", nil, -2)
-            wash:SetAllPoints()
-            wash:SetColorTexture(0.25, 0.17, 0.085, 0.16)
-            card.y = 8
-            if title then
-                local heading = Text(card.frame, title, 12, -8, "GameFontNormal")
-                Line(card.frame, 10, -27, width - 20, 1, 0.25)
-                if tip then
-                    -- Hover the title for what the card is about.
-                    local hit = CreateFrame("Frame", nil, card.frame)
-                    hit:SetPoint("TOPLEFT", 8, -4)
-                    hit:SetSize(math.max(60, (heading.GetStringWidth and heading:GetStringWidth() or 60) + 10), 22)
-                    hit:EnableMouse(true)
-                    Tooltip(hit, tip)
-                end
-                card.y = 30
-            end
-            return card
-        end
-        return col
-    end
     -- A row of controls without a card around it (page headers).
     function kit.Bare(parent, width)
         local bare = setmetatable({width = width, x = 0, y = 0, rowH = 0}, Card)
         bare.frame = parent
         return bare
     end
-    -- A small stepper for table rows (NPC types).
-    function kit.Stepper(parent, x, y, valueWidth, onStep)
-        local stepper = {}
-        stepper.minus = Button(parent, "-", x, y, 24, function() onStep(-1) end)
-        stepper.value = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-        stepper.value:SetPoint("TOPLEFT", x + 24, y - 4)
-        stepper.value:SetWidth(valueWidth); stepper.value:SetJustifyH("CENTER")
-        stepper.plus = Button(parent, "+", x + 24 + valueWidth, y, 24, function() onStep(1) end)
-        return stepper
-    end
-    function kit.Layout() end -- layout B restacks its rows here
-    -- A button that holds a color or an icon and opens its picker.
-    function kit.Well(parent, x, y, width, onClick) return Button(parent, "", x, y, width, onClick) end
-    return kit
+    return A.ModernKit(kit)
 end
 
 -- Settings shared by the pages ---------------------------------------------------
@@ -611,9 +435,6 @@ local function LevelCard(col, enemy, enabledFn)
         function(anchor) PickCustom(colors, colorKey, anchor) end, function() return db.colors[colors] end, {when = on})
     card:Seg("Side", {{"Before", "left"}, {"After", "right"}}, function() return db[p .. "LevelSide"] end,
         function(v) A.SetOption(p .. "LevelSide", v) end, {when = on})
-    card:Note("Classic badge. Your target always shows its level.", {classic = true})
-    card:Note(enemy and "Key: \"Show or hide enemy levels\" (Key Bindings > Forever Names)."
-        or "Key: \"Show or hide friendly levels\" (Key Bindings > Forever Names).", {classic = true})
     card:End()
 end
 local function GuildCard(col, enemy, enabledFn)
@@ -664,7 +485,7 @@ local function BuildPlayers(kit, view, index, enabled)
         icons:Note("Who gets an icon, in priority order (the first matches show):")
         for _, relation in ipairs(A.relationships) do
             local frame, x, y = icons:Custom(300, ROW + 2)
-            local shift = kit.modern and 74 or 0 -- layout B: against the card's right edge
+            local shift = 74 -- against the card's right edge
             local check = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
             check:SetPoint("TOPLEFT", x - 4, -y + 1); check:SetSize(24, 24)
             local text = check.Text or check.text
@@ -815,7 +636,6 @@ local function BuildEnemies(kit, view, index, enabled)
         local test = right:Card("Try it in the world")
         test:Check("Show friendly players as enemies", function() return A.enemyTest == true end, function(v) A.SetEnemyTest(v) end,
             {tip = "Friendly players around you are drawn as opposite-faction players with these settings. Not saved. Also /fnames enemytest."})
-        test:Note("Friendly players around you are drawn with these settings. Not saved.", {classic = true})
         test:End()
     end
 end
@@ -831,8 +651,8 @@ local function BuildNPCTypes(kit, view)
     local db = A.db
     local col = kit.Column(view, 0, 810)
     local card = col:Card(nil)
-    -- The table is one row of the card; layout B starts it 8 px higher.
-    local up = kit.modern and 8 or 0
+    -- The table is one row of the card, started 8 px higher.
+    local up = 8
     local body = card:Custom(810, 308 - up)
     for _, header in ipairs({{"Type", 14}, {"Preview", 170}, {"Color", 440}, {"Name size", 520}, {"Subtitle size", 642}}) do
         kit.Text(body, header[1], header[2], -12 + up, "GameFontNormalSmall")
@@ -894,18 +714,14 @@ local function BuildNPCs(kit, view, index)
     local distanceNote = "Forever controls the native-name distance; addons cannot change its cutoff."
     names:Check("Hide Blizzard hostile NPC names", function() return db.hideNativeHostileNames end, function(v) A.SetOption("hideNativeHostileNames", v) end,
         {more = hostileNote .. "\n\n" .. distanceNote})
-    names:Note(hostileNote, {indent = true, classic = true})
-    names:Note(distanceNote, {indent = true, classic = true})
     local servicesNote = "Trainers, vendors and other services of the other faction."
     names:Check("Label opposite-faction service NPCs", function() return db.includeOppositeFaction end, function(v) A.SetOption("includeOppositeFaction", v) end,
         {more = servicesNote})
-    names:Note(servicesNote, {indent = true, classic = true})
     names:End()
     local quests = left:Card("Quest enemies")
     local questNote = "A yellow ! left of hostile and neutral enemies you need for an active quest: ones to kill, or ones that drop quest items. It goes away when the objective is done."
     quests:Check("Show ! beside enemies for your quests", function() return db.questMark end, function(v) A.SetOption("questMark", v) end,
         {more = questNote})
-    quests:Note(questNote, {indent = true, classic = true})
     quests:End()
     local fix = right:Card("Mislabeled NPC?")
     fix:Note("Target the NPC, then pick how it should be labeled. Auto returns it to automatic detection.")
@@ -984,8 +800,7 @@ local function BuildAll(kit, view, index)
     local left, right = kit.Column(view, 0, 400), kit.Column(view, 410, 400)
     if index == 1 then
         local opacityNote = "Multiplies the game's own distance fade. Only this addon's names."
-        local labels = left:Card("Opacity of our names", nil, kit.modern and opacityNote or nil)
-        labels:Note(opacityNote, {classic = true})
+        local labels = left:Card("Opacity of our names", nil, opacityNote)
         for _, setting in ipairs(A.labelOpacityControls) do
             labels:Step(opacityNames[setting.key] or setting.label, function() return Percent(db[setting.key]) end,
                 function(direction) A.StepFade(setting, false, direction) end, {labelWidth = 150, valueWidth = 50})
@@ -1032,7 +847,6 @@ local function BuildAll(kit, view, index)
         local perfNote = "Saves work in crowds. Friendly nameplates stay enabled while custom names or a health bar are on."
         perf:Check("Health and level updates only for my target", function() return db.targetOnlyVitals end, function(v) A.SetOption("targetOnlyVitals", v) end,
             {more = perfNote})
-        perf:Note(perfNote, {classic = true})
         perf:End()
         local keys = right:Card("Keys")
         keys:Note("Click a button, then press the key you want (Shift, Ctrl or Alt allowed). Esc cancels.")
@@ -1046,7 +860,6 @@ local function BuildAll(kit, view, index)
             end, tip = entry[3]})
             keys:Button("Clear", function() if A.BindKey(entry[1], nil) then A.RefreshOptions() end end, {same = true, width = 56})
         end
-        keys:Note("Hide everything: every name and nameplate, Blizzard's too, and nothing else. Press again for exactly what you had. Enemy names: Blizzard's names over hostile NPCs; when shown, enemy players' names too, to spot enemies past nameplate range.", {classic = true})
         keys:Button("", function() A.ToggleLabels() end,
             {width = 200, label = function() return A.allHidden and "Bring everything back" or "Hide everything now" end})
         keys:End()
@@ -1070,15 +883,13 @@ local PAGES = {
         views = {"Visibility", "Text & tools"}, build = BuildAll},
 }
 
--- One window per layout, built when first used: A is the classic window (the
--- default), B the redesign (OptionsModern.lua). Both edit the same settings.
-local windows, active = {}, nil
+-- The window (its rows and cards are drawn by OptionsModern.lua).
+local active
 
-local function BuildWindow(layout)
+local function BuildWindow()
     local db, skin = A.db, A.OptionsSkin
-    local modern = layout == "b" and A.ModernKit ~= nil
-    local frameName = modern and "ForeverNamesOptionsB" or "ForeverNamesOptions"
-    local height = modern and H_B or H
+    local frameName = "ForeverNamesOptions"
+    local height = H
     local frame = CreateFrame("Frame", frameName, UIParent, "BackdropTemplate")
     frame:Hide()
     frame:SetSize(W, height)
@@ -1097,7 +908,6 @@ local function BuildWindow(layout)
     end
     local border = frame.legacyBorder or frame
     local kit = NewKit(frame)
-    if modern then A.ModernKit(kit) end
     local content = CreateFrame("Frame", nil, frame)
     content:SetPoint("TOPLEFT", 26, -42)
     content:SetPoint("BOTTOMRIGHT", -22, 50)
@@ -1131,46 +941,23 @@ local function BuildWindow(layout)
         local function GetView() return page.viewIndex end
         local function GetMaster() return db[info.master[2]] end
         local function SetMaster(value) A.SetOption(info.master[2], value) end
-        local top
-        if modern then
-            -- One header line: the page, its views as tabs, its master switch.
-            kit.Text(page.frame, info.name, 4, -9, "GameFontNormalLarge")
-            local titleWidth = kit.Width("GameFontNormalLarge", info.name)
-            local hit = CreateFrame("Frame", nil, page.frame)
-            hit:SetPoint("TOPLEFT", 0, -4)
-            hit:SetSize(titleWidth + 8, 28)
-            hit:EnableMouse(true)
-            kit.Tooltip(hit, info.desc)
-            kit.Line(page.frame, 0, -36, W - 48, 1, 0.45)
-            if #info.views > 1 then kit.Tabs(page.frame, titleWidth + 24, -6, info.views, GetView, page.select) end
-            if info.master then
-                local holder = CreateFrame("Frame", nil, page.frame)
-                holder:SetPoint("TOPLEFT", 0, -6)
-                holder:SetSize(810, 28)
-                kit.Bare(holder, 810):Check(info.master[1], GetMaster, SetMaster, {rightEdge = 810})
-            end
-            top = 46
-        else
-            kit.Text(page.frame, info.name, 4, -2, "GameFontNormalLarge")
-            kit.Text(page.frame, info.desc, 4, -26, "GameFontHighlightSmall", 470, NOTE)
-            kit.Line(page.frame, 0, -56, W - 48, 1, 0.45)
-            -- Header controls, right-aligned: the master switch, then the views.
-            local headerFrame = CreateFrame("Frame", nil, page.frame)
-            headerFrame:SetPoint("TOPLEFT", 0, -6)
-            headerFrame:SetSize(810, 28)
-            local header = kit.Bare(headerFrame, 810)
-            local viewsWidth = 0
-            if #info.views > 1 then
-                local choices = {}
-                for j, label in ipairs(info.views) do choices[j] = {label, j} end
-                local _, total = header:Seg(nil, choices, GetView, page.select, {rightEdge = 810})
-                viewsWidth = total + 18
-            end
-            if info.master then
-                header:Check(info.master[1], GetMaster, SetMaster, {same = true, rightEdge = 810 - viewsWidth})
-            end
-            top = 66
+        -- One header line: the page, its views as tabs, its master switch.
+        kit.Text(page.frame, info.name, 4, -9, "GameFontNormalLarge")
+        local titleWidth = kit.Width("GameFontNormalLarge", info.name)
+        local hit = CreateFrame("Frame", nil, page.frame)
+        hit:SetPoint("TOPLEFT", 0, -4)
+        hit:SetSize(titleWidth + 8, 28)
+        hit:EnableMouse(true)
+        kit.Tooltip(hit, info.desc)
+        kit.Line(page.frame, 0, -36, W - 48, 1, 0.45)
+        if #info.views > 1 then kit.Tabs(page.frame, titleWidth + 24, -6, info.views, GetView, page.select) end
+        if info.master then
+            local holder = CreateFrame("Frame", nil, page.frame)
+            holder:SetPoint("TOPLEFT", 0, -6)
+            holder:SetSize(810, 28)
+            kit.Bare(holder, 810):Check(info.master[1], GetMaster, SetMaster, {rightEdge = 810})
         end
+        local top = 46
         if info.preview then
             page.preview = Preview(page.frame, info.preview)
             page.preview.frame:ClearAllPoints()
@@ -1222,27 +1009,12 @@ local function BuildWindow(layout)
         tabs[i] = tab
     end
 
-    -- Footer: enable, the layout switch, the link to Companion Journal, Close.
+    -- Footer: enable, the link to Companion Journal, Close.
     local enableBox = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
     enableBox:SetPoint("BOTTOMLEFT", 22, 14); enableBox:SetSize(26, 26)
     local enableText = enableBox.Text or enableBox.text
     enableText:SetFontObject("GameFontHighlight"); enableText:SetText("Enable Forever Names"); enableText:SetWidth(200); enableText:SetJustifyH("LEFT")
     enableBox:SetScript("OnClick", function(box) A.SetOption("enabled", box:GetChecked() == true) end)
-    local switch = CreateFrame("Frame", nil, frame)
-    switch:SetPoint("BOTTOMLEFT", 262, 14); switch:SetSize(130, 24)
-    local layouts = {{"A", "a"}, {"B", "b"}}
-    local function GetLayout() return layout end
-    local function SetLayout(value) A.SetOptionsLayout(value) end
-    local cells
-    if modern then
-        kit.Text(switch, "Layout", 0, -6, "GameFontHighlightSmall")
-        local choice = kit.Choice(switch, layouts, GetLayout, SetLayout)
-        choice:SetPoint("TOPLEFT", kit.Width("GameFontHighlightSmall", "Layout") + 8, -1)
-        cells = choice.cells
-    else
-        cells = kit.Bare(switch, 130):Seg("Layout", layouts, GetLayout, SetLayout, {same = true})
-    end
-    for _, cell in ipairs(cells) do kit.Tooltip(cell, "A: the classic window. B: the redesigned one. Same settings.") end
     local close = kit.Button(frame, "Close", 0, 0, 100, function() frame:Hide() end, 24)
     close:ClearAllPoints(); close:SetPoint("BOTTOMRIGHT", -18, 14)
     -- "Names | Journal": the two windows of the suite, one switch (with both installed).
@@ -1285,43 +1057,14 @@ local function BuildWindow(layout)
         Refresh()
     end
     Select(tonumber(db.optionsPage) or 1)
-    return {frame = frame, layout = layout, pages = pages, tabs = tabs, close = close, Select = Select, Refresh = Refresh, Open = Open,
+    return {frame = frame, pages = pages, tabs = tabs, close = close, Select = Select, Refresh = Refresh, Open = Open,
         Where = function() return pageIndex, pages[pageIndex].viewIndex end}
 end
 
-local function Use(layout)
-    local window = windows[layout]
-    if not window then
-        window = BuildWindow(layout)
-        windows[layout] = window
-    end
-    active = window
-    A.options, A.optionsPages, A.optionsTabs, A.optionsCloseButton = window.frame, window.pages, window.tabs, window.close
-    return window
-end
--- These always act on the window in use.
 function A.RefreshOptions() if active then active.Refresh() end end
 function A.SelectOptionsPage(index) if active then active.Select(index) end end
 function A.OpenOptions() if active then active.Open() end end
 function A.CreateOptions()
-    windows, active = {}, nil
-    Use(A.db.optionsLayout == "b" and "b" or "a")
-end
--- "a" or "b". An open window is replaced in place, on the same page.
-function A.SetOptionsLayout(layout)
-    layout = layout == "b" and "b" or "a"
-    A.db.optionsLayout = layout
-    local old = active
-    if not old or old.layout == layout then return end
-    if capturing then StopCapture() end
-    local window = Use(layout)
-    if not old.frame:IsShown() then return end
-    if old.frame.GetPoint and old.frame:GetPoint(1) then
-        local point, relative, relativePoint, x, y = old.frame:GetPoint(1)
-        window.frame:ClearAllPoints()
-        window.frame:SetPoint(point, relative, relativePoint, x, y)
-    end
-    local index, view = old.Where()
-    old.frame:Hide()
-    window.Open(index, view)
+    active = BuildWindow()
+    A.options, A.optionsPages, A.optionsTabs, A.optionsCloseButton = active.frame, active.pages, active.tabs, active.close
 end

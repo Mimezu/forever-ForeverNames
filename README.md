@@ -4,6 +4,13 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.17.0 One settings window: the redesign
+
+- The redesigned settings window (layout B of 1.15.0) is now the only one.
+  The old window (layout A), the **Layout A | B** switch in the footer,
+  `/fnames layout` and the saved choice are gone.
+- Nothing else changes: same four pages, same settings.
+
 ## 1.16.3 Camera drag bug: found, not in Forever Names
 
 - A press on a nameplate neither selected the unit nor moved the camera. The
@@ -14,7 +21,7 @@ and ships off, so with all of them off the addon behaves exactly like 1.6.1.
   setting "Mouse on nameplates > Click to select" (it never had an effect)
   and the 1.16.1 probe `/fnames clicks`. Their saved keys are dropped.
 
-## 1.15.0 Settings window, layout B (to try)
+## 1.15.0 Settings window, layout B (to try; the only window since 1.17.0)
 
 - The footer has a **Layout A | B** switch (also `/fnames layout a` / `b`).
   **A** is the window as it was and stays the default. **B** is a redesign of

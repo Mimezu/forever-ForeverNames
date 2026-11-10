@@ -2,7 +2,7 @@
 ## Title: Forever Names
 ## Notes: Custom friendly player names and NPC names with real subtitles and role colors.
 ## Author: Mimezu
-## Version: 1.16.3
+## Version: 1.17.0
 ## SavedVariables: ForeverNamesDB
 ## LoadSavedVariablesFirst: 1
 # Settings load through native SavedVariables.

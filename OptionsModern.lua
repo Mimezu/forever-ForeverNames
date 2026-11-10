@@ -1,6 +1,6 @@
 local _, A = ...
--- Layout B of the settings window. The pages, the settings and the Card calls
--- are the ones of layout A (OptionsWindow.lua); only the drawing differs:
+-- How the settings window is drawn. The pages and their Card calls are in
+-- OptionsWindow.lua; here:
 --   * every card has one label column and one control column,
 --   * a group of choices, or a stepper, sits in one frame instead of one per button,
 --   * a row that depends on a switch shows only while that switch is on,
@@ -10,12 +10,11 @@ local ROW, GAP, PAD, INDENT = 28, 10, 14, 22
 local CONTROL_X = 150
 local PLATE = "common-button-list-collapseExpand"
 
--- Turns a classic kit (the shared helpers stay) into the layout B kit.
+-- Adds the cards and controls to the kit of shared helpers (OptionsWindow.lua).
 function A.ModernKit(kit)
     local skin = A.OptionsSkin
     local On, Width, Text, Button, Tooltip = kit.On, kit.Width, kit.Text, kit.Button, kit.Tooltip
     local columns = {}
-    kit.modern = true
 
     -- One frame around a group of cells ---------------------------------------------
     local function Group(parent, width)
@@ -325,11 +324,9 @@ function A.ModernKit(kit)
         end)
         return stepper
     end
-    -- o.classic: layout A only (the text lives in a tooltip here).
     -- o.asLabel: the text is the row's label, and what follows starts at the controls.
     function Card:Note(text, o)
         o = o or {}
-        if o.classic then return nil end
         local row = self:Row(o, 22)
         Join(row, o)
         if o.asLabel then

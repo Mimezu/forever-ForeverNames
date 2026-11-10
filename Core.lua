@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.16.3"
+A.version = "1.17.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -27,7 +27,6 @@ A.defaults = {
     playerUnknownMode = "name", playerStrangerStyle = "raceclass",
     knownGroup = true, knownGuild = true, knownFriends = true,
     optionsPage = 1,
-    optionsLayout = "a", -- settings window: "a" classic, "b" redesigned
     colors = { vendor = {0.35, 0.9, 0.55}, quest = {1, 0.82, 0.2}, interactive = {0.65, 0.85, 1}, oppositeFaction = {1, 0.5, 0.15}, friendlyPlayer = {0.55, 0.8, 1}, playerLevel = {0.78, 0.78, 0.78} },
 }
 local active, db, scanTexture, lookupTexture = {}, nil, nil, nil
@@ -489,6 +488,7 @@ events:SetScript("OnEvent", function(_, event, arg)
         db = ForeverNamesDB
         -- Left behind by the 1.16.0 click setting and the 1.16.1 probe.
         db.plateClicks, db.clickProbe, db.clickProbeInsets = nil, nil, nil
+        db.optionsLayout = nil -- the A | B window switch of 1.15.0
         for key, value in pairs(A.defaults) do
             if key ~= "colors" and db[key] == nil then db[key] = value end
         end
@@ -748,14 +748,6 @@ SlashCmdList.FOREVERNAMES = function(message)
         db.overrides[id] = command ~= "auto" and override or nil
         A.Refresh()
         print("Forever Names:", UnitName("target"), "=", override)
-    elseif command == "layout" then
-        local which = message:lower():match("^%s*%S+%s+([ab])%s*$")
-        if which and A.SetOptionsLayout then
-            A.SetOptionsLayout(which)
-            A.OpenOptions()
-        else
-            print("Forever Names: /fnames layout a (classic window) or /fnames layout b (redesigned window).")
-        end
     elseif A.OpenOptions then
         A.OpenOptions()
     end
