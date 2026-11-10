@@ -4,6 +4,22 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.16.1 Probe for the camera drag bug (temporary)
+
+- The 1.16.0 setting below changes nothing in game: with any of its three
+  choices a drag that starts on a nameplate or on a name still does not move
+  the camera. Its cause was read from Blizzard's code and never measured.
+- `/fnames clicks` measures. It prints what the game reports for the
+  nameplate under the mouse, and from then on records every left or right
+  press: what was under the mouse and, half a second later, whether the
+  camera took the drag.
+- `/fnames clicks 1`, `2`, `3` try three ways of removing the clickable area
+  on every nameplate (clear it, move it off the plate, shrink it with the
+  game-wide insets); `/fnames clicks 0` puts the game's own areas back.
+- Everything is also kept in the saved settings (`clickProbe`), written on
+  `/reload`. Nothing runs until the command is typed. The probe and, if it
+  cannot be made to work, the 1.16.0 setting will be removed.
+
 ## 1.16.0 Camera drag on nameplates
 
 - The cause: where a nameplate can be clicked, the game selects the unit on
@@ -20,7 +36,7 @@ and ships off, so with all of them off the addon behaves exactly like 1.6.1.
   or interact. Click the character itself; that always works.
 - In combat the game only lets an addon change a plate as it appears, so a
   change of this setting made in combat finishes when combat ends.
-- Not yet checked in game.
+- Checked in game: no effect (see 1.16.1).
 
 ## 1.15.0 Settings window, layout B (to try)
 

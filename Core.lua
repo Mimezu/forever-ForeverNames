@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.16.0"
+A.version = "1.16.1"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -754,6 +754,9 @@ SlashCmdList.FOREVERNAMES = function(message)
         db.overrides[id] = command ~= "auto" and override or nil
         A.Refresh()
         print("Forever Names:", UnitName("target"), "=", override)
+    elseif command == "clicks" then
+        -- Temporary probe for the camera-drag bug (PlateClickProbe.lua).
+        if A.PlateClickProbe then A.PlateClickProbe(message:match("^%s*%S+%s+(%S+)")) end
     elseif command == "layout" then
         local which = message:lower():match("^%s*%S+%s+([ab])%s*$")
         if which and A.SetOptionsLayout then
