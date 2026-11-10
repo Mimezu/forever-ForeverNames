@@ -4,6 +4,25 @@ Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
 players in the open world. Every feature added since 1.7.0 has its own toggle
 and ships off, so with all of them off the addon behaves exactly like 1.6.1.
 
+## 1.15.0 Settings window, layout B (to try)
+
+- The footer has a **Layout A | B** switch (also `/fnames layout a` / `b`).
+  **A** is the window as it was and stays the default. **B** is a redesign of
+  the same four pages. Both edit the same settings; switching keeps the page,
+  the view and the window's place.
+- Layout B, same functions, less to read:
+  - One header line per page: title (hover it for the description), the views
+    as text tabs, the page's master switch on the right.
+  - Labels in one column, controls in the next, so each card reads top to
+    bottom. Choices, steppers and color/icon buttons share one quiet plate
+    style; the selected choice is gold. Red buttons are kept for actions
+    (Reset, Close, keys, Compare, Mislabeled NPC).
+  - Rows that depend on a switch appear when it is on (bar sizes under
+    "health bar", icon rows under their icon option...).
+  - Reference notes moved into each row's tooltip.
+- The window is 20 px taller in layout B. `OptionsModern.lua` holds its kit;
+  the pages are built once by the same code for both layouts.
+
 ## 1.14.0 Two keys, set in the addon
 
 - **Hide everything** (the old "Hide or show names" key, same binding, and

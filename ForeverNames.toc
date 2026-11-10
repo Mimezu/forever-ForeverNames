@@ -2,7 +2,7 @@
 ## Title: Forever Names
 ## Notes: Custom friendly player names and NPC names with real subtitles and role colors.
 ## Author: Mimezu
-## Version: 1.14.0
+## Version: 1.15.0
 ## SavedVariables: ForeverNamesDB
 ## LoadSavedVariablesFirst: 1
 # Settings load through native SavedVariables.
@@ -22,6 +22,7 @@ Wounded.lua
 QuestMarks.lua
 HideAll.lua
 OptionsSkin.lua
+OptionsModern.lua
 ColorPicker.lua
 Options.lua
 OptionsWindow.lua

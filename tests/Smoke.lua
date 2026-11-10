@@ -203,7 +203,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -1815,6 +1815,51 @@ do
  C.SetOption('peopleRename',false);C.SetOption('peopleIcons',false);C.db.people={}
  A.Refresh();settle()
  UnitFullName,GetNormalizedRealmName=nil,nil
+end
+-- Settings window layouts: A (classic, the default) and B (the redesign) edit the same settings.
+do
+ local page=A.db.optionsPage
+ equal(A.defaults.optionsLayout,'a','the classic window is the default')
+ A.db.optionsLayout='a';A.CreateOptions()
+ local classic=A.options
+ equal(classic,ForeverNamesOptions,'layout A is the classic frame')
+ A.SelectOptionsPage(3);A.OpenOptions()
+ A.optionsPages[3].select(2)
+ A.SetOptionsLayout('b')
+ local modern=A.options
+ check(modern~=classic and modern==ForeverNamesOptionsB,'layout B is its own window')
+ equal(classic.shown,false,'switching hides the old window')
+ equal(modern.shown,true,'and opens the new one')
+ equal(A.db.optionsLayout,'b','the choice is saved')
+ equal(A.db.optionsPage,3,'on the same page')
+ equal(A.optionsPages[3].viewIndex,2,'and the same view')
+ equal(#A.optionsPages,4,'layout B has the same four pages')
+ for i,entry in ipairs(A.optionsPages) do
+  A.SelectOptionsPage(i)
+  for v=1,#entry.views do entry.select(v);A.RefreshOptions() end
+ end
+ A.optionsCloseButton.scripts.OnClick()
+ equal(modern.shown,false,'Close closes layout B')
+ A.SetOptionsLayout('a')
+ equal(A.options,classic,'back to A: the same classic window, not a new one')
+ equal(classic.shown,false,'a closed window stays closed when the layout changes')
+ local said,realPrint=nil,print
+ print=function(...) said=table.concat({...},' ') end
+ SlashCmdList.FOREVERNAMES('layout b')
+ equal(A.options,modern,'/fnames layout b switches');equal(modern.shown,true,'and opens it')
+ SlashCmdList.FOREVERNAMES('layout')
+ check(said and said:find('layout a',1,true),'/fnames layout alone says how')
+ equal(A.db.optionsLayout,'b','and changes nothing')
+ SlashCmdList.FOREVERNAMES('layout a')
+ print=realPrint
+ equal(A.options,classic,'/fnames layout a returns to the classic window');equal(classic.shown,true,'open')
+ equal(modern.shown,false,'with B closed')
+ classic:Hide()
+ A.db.optionsLayout='b';A.CreateOptions()
+ equal(A.options,ForeverNamesOptionsB,'a saved B is the window built at login')
+ A.db.optionsLayout='a';A.CreateOptions()
+ equal(A.options,ForeverNamesOptions,'and A again')
+ A.db.optionsPage=page
 end
 -- Quest enemies: a "!" left of attackable NPCs tied to an active quest (off by default).
 do
