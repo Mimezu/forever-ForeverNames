@@ -1,34 +1,57 @@
 local addonName, A = ...
-A.version = "1.17.0"
+A.version = "1.18.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
     hideNativeHostileNames = true,
     hideNativePlayerNames = true,
     nativeSmoothScaling = true,
-    targetOnlyVitals = true,
+    targetOnlyVitals = false,
     showFriendlyPlayers = true,
-    targetHealthBar = true, targetHealthStyle = "minimal",
+    targetHealthBar = false, targetHealthStyle = "minimal",
     targetHealthLevel = false,
-    targetHealthWidth = 82, targetHealthHeight = 4, targetHealthGap = 3,
+    targetHealthWidth = 62, targetHealthHeight = 3, targetHealthGap = 3,
     targetHealthOpacity = 1, targetHealthNameColor = true,
     targetHealthColorMode = "name", -- "name", "class" or "custom" (1.10; the checkbox above is kept in step)
     targetHealthR = 0.25, targetHealthG = 0.85, targetHealthB = 0.4,
-    opacity = 1, subtitleOpacity = 1, targetOpacity = 1, otherOpacity = 1, combatOpacity = 1,
-    customizeGlobalFade = false,
-    -- Player label extras: all off, so the default look is unchanged.
-    playerShowLevel = false, playerShowGuild = false, playerShowGuildRank = false,
-    playerShowTitle = false, playerColorMode = "blizzard", playerLevelColorMode = "name",
-    playerLevelStyle = "plain", playerLevelSide = "right", -- playerLevelSize: nil = automatic
+    opacity = 1, subtitleOpacity = 0.9, targetOpacity = 1, otherOpacity = 0.7, combatOpacity = 1,
+    customizeGlobalFade = true, -- with A.freshFadeValues (Fading.lua)
+    -- Player label extras. Since 1.18.0 the defaults are the author's own setup.
+    playerShowLevel = true, playerShowGuild = true, playerShowGuildRank = false,
+    playerShowTitle = false, playerColorMode = "class", playerLevelColorMode = "class",
+    playerLevelStyle = "classic", playerLevelSide = "right", -- playerLevelSize: nil = automatic
     -- Level shown for "all", "near" (range 3 = ~10 yd, 15 = 15 yd item check, 4 = ~28 yd)
     -- or "target" (the selected player only).
-    playerLevelScope = "all", playerLevelRange = 3,
+    playerLevelScope = "near", playerLevelRange = 15,
     -- Immersion: how players you don't know are labeled ("name" = unchanged).
     playerUnknownMode = "name", playerStrangerStyle = "raceclass",
     knownGroup = true, knownGuild = true, knownFriends = true,
     optionsPage = 1,
     colors = { vendor = {0.35, 0.9, 0.55}, quest = {1, 0.82, 0.2}, interactive = {0.65, 0.85, 1}, oppositeFaction = {1, 0.5, 0.15}, friendlyPlayer = {0.55, 0.8, 1}, playerLevel = {0.78, 0.78, 0.78} },
 }
+-- Fresh installs only (1.18.0): the author's own nameplate distances, text
+-- sizes and per-style health bar sizes. Existing settings are never touched.
+A.freshSettings = {
+    fadeValues = {
+        nameplateMaxDistance = 150, nameplateMaxAlpha = 0.7, nameplateMinAlpha = 0.3,
+        nameplateMaxAlphaDistance = 50, nameplateMinAlphaDistance = 0, nameplateOccludedAlphaMult = 0,
+        nameplateMaxScale = 0.85, nameplateMinScale = 0.85, nameplateMaxScaleDistance = 0, nameplateMinScaleDistance = 0,
+    },
+    textSizes = {
+        enemyPlayer = {name = 13}, friendlyPlayer = {name = 12, subtitle = 8}, quest = {name = 13, subtitle = 10},
+    },
+    targetHealthStyleSettings = {
+        classic = {targetHealthWidth = 86, targetHealthHeight = 8, targetHealthGap = 3, targetHealthOpacity = 1},
+        default = {targetHealthWidth = 76, targetHealthHeight = 5, targetHealthGap = 3, targetHealthOpacity = 1},
+        minimal = {targetHealthWidth = 62, targetHealthHeight = 3, targetHealthGap = 3, targetHealthOpacity = 1},
+    },
+}
+local function CopyTable(value)
+    if type(value) ~= "table" then return value end
+    local copy = {}
+    for key, child in pairs(value) do copy[key] = CopyTable(child) end
+    return copy
+end
 local active, db, scanTexture, lookupTexture = {}, nil, nil, nil
 local QueueUnit
 local function Now() return GetTime and GetTime() or 0 end
@@ -484,8 +507,12 @@ events:RegisterEvent("ADDON_LOADED")
 events:SetScript("OnEvent", function(_, event, arg)
     if event == "ADDON_LOADED" then
         if arg ~= addonName then return end
+        local fresh = type(ForeverNamesDB) ~= "table" or next(ForeverNamesDB) == nil
         ForeverNamesDB = type(ForeverNamesDB) == "table" and ForeverNamesDB or {}
         db = ForeverNamesDB
+        if fresh then
+            for key, value in pairs(A.freshSettings) do db[key] = CopyTable(value) end
+        end
         -- Left behind by the 1.16.0 click setting and the 1.16.1 probe.
         db.plateClicks, db.clickProbe, db.clickProbeInsets = nil, nil, nil
         db.optionsLayout = nil -- the A | B window switch of 1.15.0

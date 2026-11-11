@@ -20,15 +20,15 @@ A.relationships = {
     {key = "party", option = "iconsParty", label = "Group members", glyph = "party", color = {0.55, 0.8, 1}},
     {key = "friend", option = "iconsFriend", label = "Friends", glyph = "star", color = {1, 0.82, 0.2}},
     {key = "bnet", option = "iconsBnet", label = "Battle.net friends", glyph = "sparkle", color = {0.3, 0.75, 1}},
-    {key = "guild", option = "iconsGuild", label = "Guild members", glyph = "shield", color = {0.25, 0.85, 0.4}},
+    {key = "guild", option = "iconsGuild", label = "Guild members", glyph = "flag", color = {0.25, 0.85, 0.4}},
 }
 local byKey = {}
 for _, relation in ipairs(A.relationships) do
     byKey[relation.key] = relation
-    A.defaults[relation.option] = false
+    A.defaults[relation.option] = true
     A.defaults.colors["icon_" .. relation.key] = relation.color
 end
-A.defaults.iconPosition, A.defaults.iconMax = "left", 2 -- iconSize: nil = name height
+A.defaults.iconPosition, A.defaults.iconMax = "above", 2 -- iconSize: nil = name height
 
 function A.InitIcons()
     local db = A.db

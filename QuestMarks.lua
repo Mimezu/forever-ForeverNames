@@ -5,7 +5,7 @@ local _, A = ...
 -- plate and never touches Blizzard's regions.
 -- Work happens only on plate arrival and quest-log updates, both already
 -- queued by Core. With the option off, nothing is read or created.
-A.defaults.questMark = false
+A.defaults.questMark = true
 A.defaults.colors.questMark = {1, 0.82, 0.2}
 
 local GLYPH = "Interface\\AddOns\\ForeverNames\\Media\\Glyphs\\exclaim"

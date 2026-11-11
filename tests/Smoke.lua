@@ -222,6 +222,16 @@ local function emit(e,u)
   if not filters or filters[1]==u or filters[2]==u then healthDriver.scripts.OnEvent(healthDriver,e,u) end
  end
 end
+-- An existing install with the pre-1.18 look (1.18.0 made the author's setup the
+-- default for fresh installs); the assertions below were written against it.
+ForeverNamesDB={targetOnlyVitals=true,targetHealthBar=true,targetHealthWidth=82,targetHealthHeight=4,subtitleOpacity=1,otherOpacity=1,
+ customizeGlobalFade=false,playerShowLevel=false,playerShowGuild=false,playerColorMode='blizzard',playerLevelColorMode='name',playerLevelStyle='plain',
+ playerLevelScope='all',playerLevelRange=3,enemyEnabled=false,enemyColorMode='faction',enemyShowLevel=false,enemyFactionIcon=false,enemyPvpIcon=false,
+ enemyLevelClassColor=false,enemyLevelColorMode='name',enemyLevelRange=3,enemySwordsPosition='left',iconPosition='left',
+ iconsParty=false,iconsFriend=false,iconsBnet=false,iconsGuild=false,questMark=false,woundedPlayers=false,woundedParty=false,enemyBarWidth=60}
+-- Companion Journal likewise (its 1.22.0 defaults turn the people features on).
+CompanionJournalDB={peopleRename=false,peopleIcons=false,peopleTooltip=false,peopleLastSeen=false,peopleMenu=false,
+ peopleAutoGroup=false,peopleAutoCampfire=false,peopleGroupPrompt=false}
 emit('ADDON_LOADED','ForeverNames');cjEvents.scripts.OnEvent(cjEvents,'ADDON_LOADED','CompanionJournal')
 emit('PLAYER_LOGIN');cjEvents.scripts.OnEvent(cjEvents,'PLAYER_LOGIN');settle()
 check(CompanionJournalAPI and ForeverNamesAPI,'both addons publish their API')
@@ -413,7 +423,7 @@ do
  local pool=state(pf).overlay.icons
  check(pool and pool[1].shown and pool[2].shown,'two icons shown')
  equal(pool[1].path,A.GlyphPath('party'),'group icon first (priority order)')
- equal(pool[2].path,A.GlyphPath('shield'),'guild icon second')
+ equal(pool[2].path,A.GlyphPath('flag'),'guild icon second')
  equal(pool[1].tint[1],A.db.colors.icon_party[1],'icon tinted with its color')
  equal(pool[1].anchor[1],'RIGHT','icons sit before the name by default')
  equal(pool[1].width,A.GetTextSizes('friendlyPlayer'),'automatic icon size matches the name')
@@ -1608,7 +1618,7 @@ do
   equal(healthReads,readsBefore,'level toggle does not reread health')
   equal(updateCalls,updatesBefore,'level toggle does not rescan or classify crowd')
   equal(lookups,lookupsBefore,'level toggle does not look up crowd plates')
-  equal(hp.anchor[5],-8,'minimal bar moves just enough to keep pill below the name')
+  equal(hp.anchor[5],-8.5,'minimal bar moves just enough to keep pill below the name')
   check(not pill.scripts.OnUpdate,'level pill has no update loop')
   for _,style in ipairs({'minimal','default','classic'}) do
    A.SetTargetHealthPreset(style)

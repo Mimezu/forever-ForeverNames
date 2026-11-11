@@ -113,7 +113,7 @@ function A.ResetLabelOpacity()
 end
 function A.ResetTargetHealth()
     for key, value in pairs(A.defaults) do
-        if key:match("^targetHealth") then A.db[key] = value end
+        if key:match("^targetHealth") and key ~= "targetHealthBar" then A.db[key] = value end -- sizes and colors, not on/off
     end
     A.db.targetHealthStyleSettings = nil -- every style back to its built-in size
     A.ApplyCVars()

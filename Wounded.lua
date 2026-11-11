@@ -14,7 +14,7 @@ local function Read(func, ...)
     if ok and Public(value) then return value end
 end
 
-A.defaults.woundedPlayers, A.defaults.woundedParty = false, false
+A.defaults.woundedPlayers, A.defaults.woundedParty = true, true
 A.defaults.woundedWidth, A.defaults.woundedHeight = 60, 2
 A.defaults.colors.wounded = {0.4, 0.82, 0.35}
 -- "custom" (the color above), "class", or "name" (the name's current color).
@@ -143,7 +143,7 @@ end
 -- Enemy health bar (Enemy tab): always shown under our enemy label, in their
 -- class color. Not in "our names on their bars" mode (Blizzard's bar is there).
 A.defaults.enemyHealthBar = false
-A.defaults.enemyBarWidth, A.defaults.enemyBarHeight = 60, 3
+A.defaults.enemyBarWidth, A.defaults.enemyBarHeight = 68, 3
 -- "class" (default), "name" (the name's color) or "custom" (colors.enemyBar).
 A.defaults.enemyBarColorMode = "class"
 function A.EnemyBarColor(state)

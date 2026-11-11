@@ -1,8 +1,24 @@
 # Forever Names (Forever 16001)
 
 Formerly **Friendly NPC Names**. Immersion and RP labels for friendly NPCs and
-players in the open world. Every feature added since 1.7.0 has its own toggle
-and ships off, so with all of them off the addon behaves exactly like 1.6.1.
+players in the open world. Every feature added since 1.7.0 has its own toggle.
+Since 1.18.0 a fresh install starts with the author's own setup (below);
+turn features off to get back to the plain 1.6.1 look.
+
+## 1.18.0 The author's setup is the default
+
+- A fresh install starts with the settings used on Alberich: player names in
+  class colors with level (classic badge, within 15 yd) and guild; enemy
+  players shown with class colors, level, faction and PvP icons, swords above;
+  relationship icons (group, friends, Battle.net, guild flag) above the name;
+  quest marks; wounded bars for players and your group; subtitles at 90% and
+  other names at 70%; nameplate distance and fading on (150 yd, 70% near /
+  30% far, 85% size, hidden behind walls); larger quest, enemy and player
+  text; target health bar off, target-only vitals off.
+- Existing installs keep every setting they have.
+- Hiding or showing all names (key, /fnames hide, settings button) no longer
+  prints to chat.
+- "Reset bar" resets the target health bar's look but leaves it on or off.
 
 ## 1.17.0 One settings window: the redesign
 

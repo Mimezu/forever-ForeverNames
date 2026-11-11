@@ -310,14 +310,14 @@ end
 -- Opposite-faction players ---------------------------------------------------
 -- Enemy = another player of the other faction (not you, not Neutral). Enemies
 -- are untouched unless the Enemy tab is enabled.
-A.defaults.enemyEnabled = false
+A.defaults.enemyEnabled = true
 A.defaults.enemyFlaggedStyle = "native"   -- flagged: "native" plates or "names" on native bars
 A.defaults.enemyScope = "all"             -- not flagged: all/near/target/hidden
 A.defaults.enemyRange = 3                 -- near: 3 = ~10 yd, 15 = 15 yd, 4 = ~28 yd
-A.defaults.enemyColorMode = "faction"     -- blizzard/class/faction/custom
-A.defaults.enemyShowLevel, A.defaults.enemyShowGuild, A.defaults.enemyShowTitle = false, false, false
+A.defaults.enemyColorMode = "class"       -- blizzard/class/faction/custom
+A.defaults.enemyShowLevel, A.defaults.enemyShowGuild, A.defaults.enemyShowTitle = true, false, false
 A.defaults.enemyStranger, A.defaults.enemyStrangerStyle = false, "raceclass"
-A.defaults.enemyFactionIcon, A.defaults.enemyPvpIcon = false, false
+A.defaults.enemyFactionIcon, A.defaults.enemyPvpIcon = true, true
 -- A mark around enemy names (Enemies tab). Font, opacity and emblem position
 -- were tried in the 1.9.5 enemy lab; the emblem now always sits before the name.
 A.defaults.enemyMark = "none"
@@ -328,18 +328,18 @@ function A.EnemyMark(name)
     return mark[1] .. name .. mark[2]
 end
 -- Class color for the faction emblem (flat silhouette, or tinted) and the level.
-A.defaults.enemyFactionClassColor, A.defaults.enemyLevelClassColor = false, false
+A.defaults.enemyFactionClassColor, A.defaults.enemyLevelClassColor = false, true
 A.defaults.colors.enemyPlayer = {1, 0.45, 0.35}
 A.defaults.colors.enemyPvp = {1, 0.3, 0.25}
 -- 1.10: what enemies share with friendly players became their own settings
 -- (Core.lua copies today's shared values across once). Level: side, size
 -- (nil = automatic), color ("name", "class" or "custom"), and where it shows.
-A.defaults.enemyLevelSide, A.defaults.enemyLevelColorMode = "right", "name"
-A.defaults.enemyLevelScope, A.defaults.enemyLevelRange = "all", 3
+A.defaults.enemyLevelSide, A.defaults.enemyLevelColorMode = "right", "class"
+A.defaults.enemyLevelScope, A.defaults.enemyLevelRange = "all", 15
 A.defaults.colors.enemyLevel = {0.78, 0.78, 0.78}
 A.defaults.enemyShowGuildRank = false
 -- Icons: where the crossed swords go, and the icon size (nil = automatic).
-A.defaults.enemySwordsPosition = "left"
+A.defaults.enemySwordsPosition = "above"
 A.defaults.colors.enemyBar = {1, 0.45, 0.35}
 local factionColors = {Horde = {0.95, 0.3, 0.25}, Alliance = {0.35, 0.6, 1}}
 A.factionColors = factionColors

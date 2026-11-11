@@ -72,13 +72,7 @@ function A.ToggleLabels(hidden)
     if hidden == nil then hidden = not A.allHidden end
     A.allHidden = hidden and true or nil
     A.FadeLabels(A.allHidden)
-    local done = Apply()
-    if A.allHidden then
-        print("Forever Names: all names and nameplates hidden" .. (done and "" or " (Blizzard's follow when combat ends)")
-            .. ". Press the key again (or /fnames hide) to bring them back.")
-    else
-        print("Forever Names: names and nameplates back" .. (done and "." or " when combat ends."))
-    end
+    Apply() -- silent; in combat Blizzard's plates follow when combat ends
     if A.RefreshOptions then A.RefreshOptions() end
 end
 
