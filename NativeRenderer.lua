@@ -119,6 +119,17 @@ function A.ReleaseNativeRegion(owner, region)
     return true
 end
 
+-- Something put a region we hide back (its alpha): hide it again, or both
+-- names show. Cheap: only regions this plate owns, only when visible again.
+local function Reassert(state)
+    for _, saved in ipairs(state.hiddenRegions) do
+        local region = saved.region
+        local ok, alpha = pcall(region.GetAlpha, region)
+        if ok and not (issecretvalue and issecretvalue(alpha)) and alpha ~= 0 then A.SuppressNativeRegion(state, region) end
+    end
+end
+A.ReassertPlate = Reassert
+
 local function Style(state)
     -- Plate ownership is short-lived at the distance threshold, but these
     -- addon-owned font strings survive recycling. Retain their applied style
@@ -329,6 +340,7 @@ function A.RenderPlate(plate, frame, unit, role, color, title, sizeKey, level, l
     end
     -- Release any separate pending owner only after rendered ownership exists.
     ReleasePrime(frame)
+    Reassert(state)
     local anchorMode = keepBars and frame.HealthBarsContainer and "bars" or "center"
     if overlay.anchorMode ~= anchorMode then
         overlay.anchorMode = anchorMode

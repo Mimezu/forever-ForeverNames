@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.19.0"
+A.version = "1.19.1"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -438,7 +438,7 @@ function RefreshOpacity()
         if plate and not (plate.IsForbidden and plate:IsForbidden()) then
             local frame = plate.UnitFrame
             local state = frame and A.RenderStates[frame]
-            if state then A.NativeOpacity(state) end
+            if state then A.ReassertPlate(state); A.NativeOpacity(state) end
         end
     end
 end
@@ -448,6 +448,7 @@ local playerNameCVars = {UnitNameFriendlyPlayerName = true, UnitNameEnemyPlayerN
 local cvars = {nameplateShowFriendlyNpcs = "1", nameplateShowFriends = "1", nameplateShowEnemies = "1", UnitNameNPC = "0", UnitNameInteractiveNPC = "0", UnitNameFriendlySpecialNPCName = "0", UnitNameHostleNPC = "0",
     UnitNameFriendlyPlayerName = "0", UnitNameEnemyPlayerName = "0",
     UnitNameFriendlyPetName = "0", UnitNameFriendlyMinionName = "0", UnitNameFriendlyGuardianName = "0"}
+local cvarCheckQueued = false
 function A.ApplyCVars()
     if InCombatLockdown() then A.pendingCVars = true; return end
     A.pendingCVars = nil
@@ -578,8 +579,16 @@ events:SetScript("OnEvent", function(_, event, arg)
             ScheduleAll()
         end
     elseif event == "CVAR_UPDATE" then
-        -- Do not fight the client's or another addon's CVar changes.
-        -- Preferences apply on login/world entry and explicit user changes.
+        -- Names over heads (UnitName*) that something turned back on while
+        -- ours are drawn show every name twice: put our values back once.
+        -- Other game settings are left alone.
+        if db.enabled and cvars[arg] and not cvarCheckQueued then
+            cvarCheckQueued = true
+            C_Timer.After(0, function()
+                cvarCheckQueued = false
+                A.ApplyCVars()
+            end)
+        end
         return
     elseif event == "NAME_PLATE_UNIT_ADDED" then TrackPlate(arg)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then

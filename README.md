@@ -5,6 +5,14 @@ players in the open world. Every feature added since 1.7.0 has its own toggle.
 Since 1.18.0 a fresh install starts with the author's own setup (below);
 turn features off to get back to the plain 1.6.1 look.
 
+## 1.19.1 Doubled names
+
+- Fixed: a name sometimes showed twice (ours and a smaller Blizzard one)
+  until a reload.
+- With "Hide Blizzard NPC names" or "Hide Blizzard player names" on, names
+  over heads turned back on elsewhere (Blizzard's NPC names menu, another
+  addon) are turned off again.
+
 ## 1.19.0 Hold keys
 
 - Each of the four keys has a **Hold** tick: on while held, back on release.

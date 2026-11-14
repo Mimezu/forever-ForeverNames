@@ -328,6 +328,15 @@ equal(vf.HealthBarsContainer.alphaWrites,1,'unchanged suppression does not repea
 equal(vf.LevelFrame.alpha,0,'native level hidden')
 equal(vf.PlayerLevelDiffFrame.alpha,0,'native level difference hidden')
 equal(vf.name.alpha,0,'duplicate native name hidden')
+-- Something shows the hidden native name again: hidden at the next pass, or both names show.
+vf.name:SetAlpha(1);emit('PLAYER_TARGET_CHANGED')
+equal(vf.name.alpha,0,'native name shown again by something else: hidden again')
+-- Names over heads turned back on elsewhere (Blizzard NPC names menu): ours come back once.
+equal(cvars.UnitNameFriendlySpecialNPCName,'0','names over heads off')
+cvars.UnitNameFriendlySpecialNPCName='1';emit('CVAR_UPDATE','UnitNameFriendlySpecialNPCName');settle()
+equal(cvars.UnitNameFriendlySpecialNPCName,'0','turned back on elsewhere: off again')
+local writes=cvarWrites;emit('CVAR_UPDATE','nameplateMaxDistance');settle()
+equal(cvarWrites,writes,'other game settings are left alone')
 equal(vf.SoftTargetFrame.alpha,1,'interaction frame alpha unchanged')
 equal(vf.SoftTargetFrame.Icon.shown,false,'addon does not force interaction icon visible')
 vf.SoftTargetFrame.Icon:Show()
