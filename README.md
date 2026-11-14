@@ -5,6 +5,12 @@ players in the open world. Every feature added since 1.7.0 has its own toggle.
 Since 1.18.0 a fresh install starts with the author's own setup (below);
 turn features off to get back to the plain 1.6.1 look.
 
+## 1.20.0 Ways in
+
+- Minimap button: click opens, drag moves. Toggle under All names > Text & tools.
+- Esc > Options > AddOns > Forever Names: Open, minimap icon, keys.
+- New key: open or close the window.
+
 ## 1.19.1 Doubled names
 
 - Fixed: a name sometimes showed twice (ours and a smaller Blizzard one)

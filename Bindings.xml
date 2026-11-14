@@ -11,4 +11,7 @@
 	<Binding name="FOREVERNAMES_TOGGLE_ENEMY_LEVEL" runOnUp="true" category="BINDING_CATEGORY_FOREVERNAMES">
 		ForeverNames_ToggleEnemyLevel(keystate)
 	</Binding>
+	<Binding name="FOREVERNAMES_TOGGLE_WINDOW" category="BINDING_CATEGORY_FOREVERNAMES">
+		ForeverNames_ToggleWindow()
+	</Binding>
 </Bindings>

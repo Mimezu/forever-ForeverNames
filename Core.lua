@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.19.1"
+A.version = "1.20.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -27,6 +27,7 @@ A.defaults = {
     playerUnknownMode = "name", playerStrangerStyle = "raceclass",
     knownGroup = true, knownGuild = true, knownFriends = true,
     optionsPage = 1,
+    minimapIcon = true, minimapAngle = 200, -- the minimap button (Launcher.lua); angle in degrees
     colors = { vendor = {0.35, 0.9, 0.55}, quest = {1, 0.82, 0.2}, interactive = {0.65, 0.85, 1}, oppositeFaction = {1, 0.5, 0.15}, friendlyPlayer = {0.55, 0.8, 1}, playerLevel = {0.78, 0.78, 0.78} },
 }
 -- Fresh installs only (1.18.0): the author's own nameplate distances, text
@@ -569,6 +570,7 @@ events:SetScript("OnEvent", function(_, event, arg)
             end
         end
         A.CreateOptions()
+        if A.CreateLauncher then A.CreateLauncher() end -- minimap button, Blizzard Settings page
         -- Companion Journal (installed): changes to your people redraw our labels.
         local people = A.People and A.People()
         if people and people.Subscribe then people.Subscribe(function() if db.enabled then A.Refresh() end end) end
@@ -799,6 +801,7 @@ BINDING_NAME_FOREVERNAMES_TOGGLE_LABELS = "Hide or show all names and nameplates
 BINDING_NAME_FOREVERNAMES_TOGGLE_ENEMY_NAMES = "Show or hide enemy names"
 BINDING_NAME_FOREVERNAMES_TOGGLE_LEVEL = "Show or hide friendly levels"
 BINDING_NAME_FOREVERNAMES_TOGGLE_ENEMY_LEVEL = "Show or hide enemy levels"
+BINDING_NAME_FOREVERNAMES_TOGGLE_WINDOW = "Open or close Forever Names"
 local function ToggleLevel(quiet)
     A.SetOption("playerShowLevel", not A.db.playerShowLevel)
     if not quiet then print("Forever Names: friendly levels " .. (A.db.playerShowLevel and "shown." or "hidden.")) end
@@ -851,6 +854,7 @@ function ForeverNames_ToggleLabels(keystate) A.KeyPress("FOREVERNAMES_TOGGLE_LAB
 function ForeverNames_ToggleEnemyNames(keystate) A.KeyPress("FOREVERNAMES_TOGGLE_ENEMY_NAMES", keystate) end
 function ForeverNames_ToggleLevel(keystate) A.KeyPress("FOREVERNAMES_TOGGLE_LEVEL", keystate) end
 function ForeverNames_ToggleEnemyLevel(keystate) A.KeyPress("FOREVERNAMES_TOGGLE_ENEMY_LEVEL", keystate) end
+function ForeverNames_ToggleWindow() if A.ToggleOptions then A.ToggleOptions() end end
 
 -- Shift, Ctrl or Alt alone as a key: not a game binding (the game does not
 -- bind them alone), so the addon watches them. Ignored while typing.

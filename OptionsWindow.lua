@@ -748,7 +748,9 @@ local KEY_ACTIONS = {
     {"FOREVERNAMES_TOGGLE_ENEMY_NAMES", "Enemy names", "Blizzard's names over hostile NPCs. When shown, enemy players' names too, to spot enemies past nameplate range."},
     {"FOREVERNAMES_TOGGLE_LEVEL", "Friendly levels", "Show or hide the level of friendly players."},
     {"FOREVERNAMES_TOGGLE_ENEMY_LEVEL", "Enemy levels", "Show or hide the level of opposite-faction players."},
+    {"FOREVERNAMES_TOGGLE_WINDOW", "This window", "Open or close Forever Names.", window = true},
 }
+local isWindowKey = {FOREVERNAMES_TOGGLE_WINDOW = true}
 A.keyActions = KEY_ACTIONS
 local MODIFIERS = {LSHIFT = true, RSHIFT = true, LCTRL = true, RCTRL = true, LALT = true, RALT = true, LMETA = true, RMETA = true}
 local capturing
@@ -790,6 +792,7 @@ StopCapture = function()
         capturing, A.keyCapturing = nil, nil
     end
     if A.RefreshOptions then A.RefreshOptions() end
+    if A.RefreshSettingsPage then A.RefreshSettingsPage() end
 end
 StartCapture = function(action, button)
     if InCombatLockdown() then print("Forever Names: keys can't be changed in combat."); return end
@@ -801,7 +804,7 @@ StartCapture = function(action, button)
     -- Shift, Ctrl or Alt pressed and released alone: that modifier is the key.
     button:SetScript("OnKeyUp", function(_, key)
         local modifier = A.modifierOf[key]
-        if modifier and capturing and capturing.modifier == modifier then
+        if modifier and capturing and capturing.modifier == modifier and not isWindowKey[action] then
             A.SetModifierKey(action, modifier)
             StopCapture()
         end
@@ -818,6 +821,13 @@ StartCapture = function(action, button)
         StopCapture()
     end)
     if A.RefreshOptions then A.RefreshOptions() end
+    if A.RefreshSettingsPage then A.RefreshSettingsPage() end
+end
+-- The same key setter, for the page in Blizzard's Settings (Launcher.lua).
+A.KeyText = KeyText
+function A.KeyCapturing(action) return capturing and capturing.action == action or false end
+function A.ToggleKeyCapture(action, button)
+    if capturing and capturing.action == action then StopCapture() else StartCapture(action, button) end
 end
 local function BuildAll(kit, view, index)
     local db = A.db
@@ -872,6 +882,9 @@ local function BuildAll(kit, view, index)
         perf:Check("Health and level updates only for my target", function() return db.targetOnlyVitals end, function(v) A.SetOption("targetOnlyVitals", v) end,
             {more = perfNote})
         perf:End()
+        local minimap = left:Card("Minimap")
+        minimap:Check("Minimap icon", function() return db.minimapIcon end, function(v) A.SetMinimapIcon(v) end)
+        minimap:End()
         local keys = right:Card("Keys")
         keys:Note("Click, then press a key. Shift, Ctrl or Alt alone: hold. Esc cancels.")
         for _, entry in ipairs(KEY_ACTIONS) do
@@ -883,11 +896,13 @@ local function BuildAll(kit, view, index)
                 return capturing and capturing.action == entry[1] and "Press a key" or KeyText(entry[1])
             end, tip = entry[3]})
             keys:Button("Clear", function() if A.BindKey(entry[1], nil) then A.RefreshOptions() end end, {same = true, width = 52})
-            keys:Check("Hold", function() return A.KeyHolds(entry[1]) end, function(v)
-                A.ReleaseKey(entry[1])
-                db.keyHold[entry[1]] = v or nil
-                A.RefreshOptions()
-            end, {same = true, when = function() return not db.keyModifier[entry[1]] end})
+            if not entry.window then
+                keys:Check("Hold", function() return A.KeyHolds(entry[1]) end, function(v)
+                    A.ReleaseKey(entry[1])
+                    db.keyHold[entry[1]] = v or nil
+                    A.RefreshOptions()
+                end, {same = true, when = function() return not db.keyModifier[entry[1]] end})
+            end
         end
         keys:Button("", function() A.ToggleLabels() end,
             {width = 200, label = function() return A.allHidden and "Bring everything back" or "Hide everything now" end})
@@ -1093,6 +1108,10 @@ end
 function A.RefreshOptions() if active then active.Refresh() end end
 function A.SelectOptionsPage(index) if active then active.Select(index) end end
 function A.OpenOptions() if active then active.Open() end end
+function A.ToggleOptions()
+    if not active then return end
+    if active.frame:IsShown() then active.frame:Hide() else active.Open() end
+end
 function A.CreateOptions()
     active = BuildWindow()
     A.options, A.optionsPages, A.optionsTabs, A.optionsCloseButton = active.frame, active.pages, active.tabs, active.close

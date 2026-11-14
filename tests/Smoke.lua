@@ -196,14 +196,23 @@ function CompactUnitFrame_UpdateName(frame)
  end
 end
 SlashCmdList={}
-Settings=setmetatable({}, {__index=function() error('must not register with Blizzard Settings') end})
+-- Blizzard's Settings: the AddOns list records each page by name.
+local settingsPages={}
+Settings={RegisterCanvasLayoutCategory=function(panel,name) return {panel=panel,name=name} end,
+ RegisterAddOnCategory=function(category) settingsPages[category.name]=category.panel end}
+Minimap=object();Minimap.width=140
+function Minimap:GetCenter() return 1000,700 end
+function Minimap:GetEffectiveScale() return 1 end
+local cursorX,cursorY=0,0
+function GetCursorPosition() return cursorX,cursorY end
+function M:SetHighlightTexture(v) self.highlight=v end
 function ReloadUI() end
 C_Texture={GetAtlasInfo=function(name)
  return {file=123,width=name=='Legacy-Challenge-BG' and 920 or 300,height=name=='Legacy-Challenge-BG' and 575 or 25,
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua','Launcher.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -2008,7 +2017,7 @@ do
  equal(A.BindKey('FOREVERNAMES_TOGGLE_LABELS','F8'),false,'no key changes in combat')
  combat=false
  equal(binds.F8,nil,'nothing bound in combat')
- equal(#A.keyActions,4,'four actions on the Keys card')
+ equal(#A.keyActions,5,'five actions on the Keys card')
  -- Hold: the key acts while held, undoes itself on release, says nothing.
  local LEVEL='FOREVERNAMES_TOGGLE_LEVEL'
  local before,said,realPrint=A.db.playerShowLevel,0,print
@@ -2058,6 +2067,78 @@ do
  A.BindKey(LEVEL,nil)
  print=realPrint
  GetBindingKey,SetBinding,GetBindingAction,SaveBindings,GetCurrentBindingSet=nil,nil,nil,nil,nil
+end
+-- Ways in: the window key, the minimap button, the page in Blizzard's Settings.
+do
+ local binds={}
+ function GetBindingKey(action) for k,a in pairs(binds) do if a==action then return k end end end
+ function SetBinding(key,action) binds[key]=action end
+ function GetBindingAction(key) return binds[key] or '' end
+ function SaveBindings() end
+ local window=A.options
+ window:Hide()
+ ForeverNames_ToggleWindow();equal(window.shown,true,'the window key opens it')
+ ForeverNames_ToggleWindow();equal(window.shown,false,'and closes it')
+ -- Minimap button: shown by default, opens the window, drags around the edge.
+ equal(A.db.minimapIcon,true,'minimap icon on by default')
+ local button=A.minimapButton
+ check(button and button.shown,'minimap button shown')
+ equal(button.parent,Minimap,'on the minimap')
+ button.scripts.OnClick(button);equal(window.shown,true,'click opens the window')
+ button.scripts.OnClick(button);equal(window.shown,false,'click again closes it')
+ button.scripts.OnDragStart(button)
+ check(button.scripts.OnUpdate,'dragging follows the cursor')
+ cursorX,cursorY=1000,800;button.scripts.OnUpdate(button)
+ equal(A.db.minimapAngle,90,'angle saved: above the minimap')
+ equal(button.anchor[4],0,'on the edge: x');equal(button.anchor[5],75,'on the edge: y')
+ button.scripts.OnDragStop(button)
+ check(not button.scripts.OnUpdate,'drag ends')
+ A.SetMinimapIcon(false);equal(button.shown,false,'icon can be hidden')
+ equal(A.db.minimapIcon,false,'and that is saved')
+ A.SetMinimapIcon(true);equal(button.shown,true,'and shown again')
+ -- The page in Esc > Options > AddOns.
+ local page=settingsPages['Forever Names']
+ check(page~=nil,'Forever Names has a page in Blizzard Settings')
+ local open,minimapBox,keyButtons,hint={},nil,{},nil
+ for _,f in ipairs(frames) do
+  if f.parent==page then
+   if f.text=='Open' then open=f
+   elseif f.kind=='CheckButton' then minimapBox=f
+   elseif f.kind=='Button' and f.text~='Clear' then keyButtons[#keyButtons+1]=f end
+  end
+ end
+ equal(#keyButtons,5,'every key can be set there')
+ page:Hide();page:Show()
+ equal(minimapBox.checked,true,'the minimap box shows the setting')
+ minimapBox.checked=false;minimapBox.scripts.OnClick(minimapBox)
+ equal(button.shown,false,'the box hides the icon')
+ minimapBox.checked=true;minimapBox.scripts.OnClick(minimapBox)
+ equal(button.shown,true,'and shows it')
+ SettingsPanel=object()
+ local hidden
+ HideUIPanel=function(f) hidden=f;f:Hide() end
+ open.scripts.OnClick(open)
+ equal(hidden,SettingsPanel,'Open closes Settings first')
+ equal(window.shown,true,'and opens the window')
+ window:Hide();SettingsPanel,HideUIPanel=nil,nil
+ -- A key set from the Settings page.
+ local windowKey=keyButtons[5]
+ function windowKey:EnableKeyboard(v) self.keyboard=v end
+ function windowKey:SetPropagateKeyboardInput() end
+ IsAltKeyDown,IsControlKeyDown,IsShiftKeyDown=function() return false end,function() return false end,function() return true end
+ windowKey.scripts.OnClick(windowKey)
+ equal(windowKey.text,'Press a key','listening for the next key')
+ windowKey.scripts.OnKeyUp(windowKey,'LSHIFT')
+ windowKey.scripts.OnKeyDown(windowKey,'LSHIFT');windowKey.scripts.OnKeyUp(windowKey,'LSHIFT')
+ equal(A.db.keyModifier.FOREVERNAMES_TOGGLE_WINDOW,nil,'Shift alone is never the window key')
+ windowKey.scripts.OnKeyDown(windowKey,'N')
+ equal(binds['SHIFT-N'],'FOREVERNAMES_TOGGLE_WINDOW','modifiers combine with the key')
+ equal(windowKey.text,'SHIFT-N','the key shows on the keycap')
+ windowKey.scripts.OnClick(windowKey);windowKey.scripts.OnKeyDown(windowKey,'ESCAPE')
+ equal(binds['SHIFT-N'],'FOREVERNAMES_TOGGLE_WINDOW','Esc cancels')
+ A.BindKey('FOREVERNAMES_TOGGLE_WINDOW',nil)
+ IsAltKeyDown,IsControlKeyDown,IsShiftKeyDown=nil,nil,nil
+ GetBindingKey,SetBinding,GetBindingAction,SaveBindings=nil,nil,nil,nil
 end
 A.db.enabled=false;A.ApplyCVars();A.Refresh()
 equal(A.targetHealthBar.shown,false,'addon disable also hides custom health')
