@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.18.0"
+A.version = "1.19.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -516,6 +516,9 @@ events:SetScript("OnEvent", function(_, event, arg)
         -- Left behind by the 1.16.0 click setting and the 1.16.1 probe.
         db.plateClicks, db.clickProbe, db.clickProbeInsets = nil, nil, nil
         db.optionsLayout = nil -- the A | B window switch of 1.15.0
+        -- Per key: hold instead of toggle; Shift, Ctrl or Alt alone as the key.
+        db.keyHold = type(db.keyHold) == "table" and db.keyHold or {}
+        db.keyModifier = type(db.keyModifier) == "table" and db.keyModifier or {}
         for key, value in pairs(A.defaults) do
             if key ~= "colors" and db[key] == nil then db[key] = value end
         end
@@ -787,25 +790,79 @@ BINDING_NAME_FOREVERNAMES_TOGGLE_LABELS = "Hide or show all names and nameplates
 BINDING_NAME_FOREVERNAMES_TOGGLE_ENEMY_NAMES = "Show or hide enemy names"
 BINDING_NAME_FOREVERNAMES_TOGGLE_LEVEL = "Show or hide friendly levels"
 BINDING_NAME_FOREVERNAMES_TOGGLE_ENEMY_LEVEL = "Show or hide enemy levels"
-function ForeverNames_ToggleLevel()
-    if not A.db or not A.SetOption then return end
+local function ToggleLevel(quiet)
     A.SetOption("playerShowLevel", not A.db.playerShowLevel)
-    print("Forever Names: friendly levels " .. (A.db.playerShowLevel and "shown." or "hidden."))
+    if not quiet then print("Forever Names: friendly levels " .. (A.db.playerShowLevel and "shown." or "hidden.")) end
 end
-function ForeverNames_ToggleEnemyLevel()
-    if not A.db or not A.SetOption then return end
+local function ToggleEnemyLevel(quiet)
     A.SetOption("enemyShowLevel", not A.db.enemyShowLevel)
-    print("Forever Names: enemy levels " .. (A.db.enemyShowLevel and "shown." or "hidden."))
+    if not quiet then print("Forever Names: enemy levels " .. (A.db.enemyShowLevel and "shown." or "hidden.")) end
 end
 -- Blizzard's names over hostile NPCs, plus enemy players' names when shown.
-function ForeverNames_ToggleEnemyNames()
-    if not A.db or not A.SetOption then return end
-    if not A.db.enabled then print("Forever Names is turned off; enemy names follow your game settings."); return end
+local function ToggleEnemyNames(quiet)
+    if not A.db.enabled then
+        if not quiet then print("Forever Names is turned off; enemy names follow your game settings.") end
+        return false
+    end
     A.SetOption("hideNativeHostileNames", not A.db.hideNativeHostileNames)
+    if quiet then return end
     local when = A.pendingCVars and " when combat ends."
         or (A.AllNamesHidden and A.AllNamesHidden() and " when names come back.") or "."
     print("Forever Names: enemy names " .. (A.db.hideNativeHostileNames and "hidden" or "shown") .. when)
 end
-function ForeverNames_ToggleLabels()
-    if A.db and A.ToggleLabels then A.ToggleLabels() end
+local function ToggleLabels()
+    if A.ToggleLabels then A.ToggleLabels() end
 end
+local KEY_TOGGLES = {
+    FOREVERNAMES_TOGGLE_LABELS = ToggleLabels,
+    FOREVERNAMES_TOGGLE_ENEMY_NAMES = ToggleEnemyNames,
+    FOREVERNAMES_TOGGLE_LEVEL = ToggleLevel,
+    FOREVERNAMES_TOGGLE_ENEMY_LEVEL = ToggleEnemyLevel,
+}
+-- A key toggles. Held (the "Hold" tick, or Shift, Ctrl or Alt alone), it
+-- acts on press and undoes itself on release, without chat lines.
+local held = {}
+function A.KeyHolds(action)
+    return A.db and (A.db.keyHold[action] or A.db.keyModifier[action] ~= nil) or false
+end
+function A.ReleaseKey(action)
+    if not held[action] then return end
+    held[action] = nil
+    if A.db then KEY_TOGGLES[action](true) end
+end
+function A.KeyPress(action, keystate)
+    local toggle = KEY_TOGGLES[action]
+    if not A.db or not A.SetOption or not toggle then return end
+    if keystate == "up" then return A.ReleaseKey(action) end
+    if not A.KeyHolds(action) then return toggle(false) end
+    if held[action] then return end -- key repeat
+    if toggle(true) ~= false then held[action] = true end
+end
+function ForeverNames_ToggleLabels(keystate) A.KeyPress("FOREVERNAMES_TOGGLE_LABELS", keystate) end
+function ForeverNames_ToggleEnemyNames(keystate) A.KeyPress("FOREVERNAMES_TOGGLE_ENEMY_NAMES", keystate) end
+function ForeverNames_ToggleLevel(keystate) A.KeyPress("FOREVERNAMES_TOGGLE_LEVEL", keystate) end
+function ForeverNames_ToggleEnemyLevel(keystate) A.KeyPress("FOREVERNAMES_TOGGLE_ENEMY_LEVEL", keystate) end
+
+-- Shift, Ctrl or Alt alone as a key: not a game binding (the game does not
+-- bind them alone), so the addon watches them. Ignored while typing.
+A.modifierOf = {LSHIFT = "SHIFT", RSHIFT = "SHIFT", LCTRL = "CTRL", RCTRL = "CTRL", LALT = "ALT", RALT = "ALT"}
+local sideDown, modDown = {}, {}
+local modifiers = CreateFrame("Frame")
+modifiers:RegisterEvent("MODIFIER_STATE_CHANGED")
+modifiers:SetScript("OnEvent", function(_, _, key, down)
+    local mod = A.modifierOf[key]
+    if not mod or not A.db then return end
+    sideDown[key] = down == 1 or down == true
+    local now = sideDown["L" .. key:sub(2)] or sideDown["R" .. key:sub(2)] or false
+    if now == (modDown[mod] or false) then return end
+    modDown[mod] = now
+    for action, which in pairs(A.db.keyModifier) do
+        if which == mod then
+            if not now then
+                A.ReleaseKey(action)
+            elseif not A.keyCapturing and not (GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()) then
+                A.KeyPress(action, "down")
+            end
+        end
+    end
+end)

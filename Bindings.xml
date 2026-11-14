@@ -1,14 +1,14 @@
 <Bindings>
-	<Binding name="FOREVERNAMES_TOGGLE_LABELS" category="BINDING_CATEGORY_FOREVERNAMES">
-		ForeverNames_ToggleLabels()
+	<Binding name="FOREVERNAMES_TOGGLE_LABELS" runOnUp="true" category="BINDING_CATEGORY_FOREVERNAMES">
+		ForeverNames_ToggleLabels(keystate)
 	</Binding>
-	<Binding name="FOREVERNAMES_TOGGLE_ENEMY_NAMES" category="BINDING_CATEGORY_FOREVERNAMES">
-		ForeverNames_ToggleEnemyNames()
+	<Binding name="FOREVERNAMES_TOGGLE_ENEMY_NAMES" runOnUp="true" category="BINDING_CATEGORY_FOREVERNAMES">
+		ForeverNames_ToggleEnemyNames(keystate)
 	</Binding>
-	<Binding name="FOREVERNAMES_TOGGLE_LEVEL" category="BINDING_CATEGORY_FOREVERNAMES">
-		ForeverNames_ToggleLevel()
+	<Binding name="FOREVERNAMES_TOGGLE_LEVEL" runOnUp="true" category="BINDING_CATEGORY_FOREVERNAMES">
+		ForeverNames_ToggleLevel(keystate)
 	</Binding>
-	<Binding name="FOREVERNAMES_TOGGLE_ENEMY_LEVEL" category="BINDING_CATEGORY_FOREVERNAMES">
-		ForeverNames_ToggleEnemyLevel()
+	<Binding name="FOREVERNAMES_TOGGLE_ENEMY_LEVEL" runOnUp="true" category="BINDING_CATEGORY_FOREVERNAMES">
+		ForeverNames_ToggleEnemyLevel(keystate)
 	</Binding>
 </Bindings>

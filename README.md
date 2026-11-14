@@ -5,6 +5,12 @@ players in the open world. Every feature added since 1.7.0 has its own toggle.
 Since 1.18.0 a fresh install starts with the author's own setup (below);
 turn features off to get back to the plain 1.6.1 look.
 
+## 1.19.0 Hold keys
+
+- Each of the four keys has a **Hold** tick: on while held, back on release.
+- Shift, Ctrl or Alt alone can be a key. It always holds; ignored while typing.
+- Held keys say nothing in chat.
+
 ## 1.18.0 The author's setup is the default
 
 - A fresh install starts with the settings used on Alberich: player names in

@@ -2000,6 +2000,54 @@ do
  combat=false
  equal(binds.F8,nil,'nothing bound in combat')
  equal(#A.keyActions,4,'four actions on the Keys card')
+ -- Hold: the key acts while held, undoes itself on release, says nothing.
+ local LEVEL='FOREVERNAMES_TOGGLE_LEVEL'
+ local before,said,realPrint=A.db.playerShowLevel,0,print
+ print=function() said=said+1 end
+ ForeverNames_ToggleLevel('down');equal(A.db.playerShowLevel,not before,'toggle: press toggles')
+ ForeverNames_ToggleLevel('up');equal(A.db.playerShowLevel,not before,'toggle: release does nothing')
+ ForeverNames_ToggleLevel('down');equal(A.db.playerShowLevel,before,'toggle: press again toggles back')
+ equal(said,2,'toggle presses still report in chat')
+ said=0;A.db.keyHold[LEVEL]=true
+ ForeverNames_ToggleLevel('down');equal(A.db.playerShowLevel,not before,'hold: press acts')
+ ForeverNames_ToggleLevel('down');equal(A.db.playerShowLevel,not before,'hold: key repeat changes nothing')
+ ForeverNames_ToggleLevel('up');equal(A.db.playerShowLevel,before,'hold: release undoes it')
+ ForeverNames_ToggleLevel('up');equal(A.db.playerShowLevel,before,'hold: a second release changes nothing')
+ equal(said,0,'hold is silent')
+ A.db.keyHold[LEVEL]=nil
+ local hidden=A.allHidden
+ A.db.keyHold.FOREVERNAMES_TOGGLE_LABELS=true
+ ForeverNames_ToggleLabels('down');equal(A.allHidden,not hidden or nil,'hold hide everything: hidden while held')
+ ForeverNames_ToggleLabels('up');equal(A.allHidden,hidden,'and back on release')
+ A.db.keyHold.FOREVERNAMES_TOGGLE_LABELS=nil
+ -- Shift, Ctrl or Alt alone: always a hold key, watched by the addon.
+ local watcher
+ for _,f in ipairs(frames) do if f.events and f.events.MODIFIER_STATE_CHANGED then watcher=f end end
+ check(watcher~=nil,'modifier keys are watched')
+ local function mod(key,down) watcher.scripts.OnEvent(watcher,'MODIFIER_STATE_CHANGED',key,down) end
+ binds.F7=LEVEL
+ check(A.SetModifierKey(LEVEL,'SHIFT'),'Shift alone can be the key')
+ equal(binds.F7,nil,'it replaces the game key')
+ equal(A.db.keyModifier[LEVEL],'SHIFT','saved');check(A.KeyHolds(LEVEL),'a modifier key always holds')
+ mod('LSHIFT',1);equal(A.db.playerShowLevel,not before,'Shift down acts')
+ mod('RSHIFT',1);mod('LSHIFT',0);equal(A.db.playerShowLevel,not before,'still held on the other side')
+ mod('RSHIFT',0);equal(A.db.playerShowLevel,before,'both released: undone')
+ mod('LCTRL',1);mod('LCTRL',0);equal(A.db.playerShowLevel,before,'Ctrl does nothing here')
+ local focus=true
+ GetCurrentKeyBoardFocus=function() return focus end
+ mod('LSHIFT',1);equal(A.db.playerShowLevel,before,'ignored while typing')
+ mod('LSHIFT',0);equal(A.db.playerShowLevel,before,'and its release too')
+ GetCurrentKeyBoardFocus=nil
+ mod('LSHIFT',1)
+ A.BindKey(LEVEL,'F6')
+ equal(A.db.playerShowLevel,before,'a new key while held releases the hold')
+ equal(A.db.keyModifier[LEVEL],nil,'a normal key replaces the modifier')
+ mod('LSHIFT',0);equal(A.db.playerShowLevel,before,'later release does nothing')
+ combat=true
+ equal(A.SetModifierKey(LEVEL,'ALT'),false,'no modifier key in combat');equal(A.db.keyModifier[LEVEL],nil,'nothing saved')
+ combat=false
+ A.BindKey(LEVEL,nil)
+ print=realPrint
  GetBindingKey,SetBinding,GetBindingAction,SaveBindings,GetCurrentBindingSet=nil,nil,nil,nil,nil
 end
 A.db.enabled=false;A.ApplyCVars();A.Refresh()

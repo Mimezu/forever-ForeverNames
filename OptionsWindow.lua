@@ -752,7 +752,10 @@ local KEY_ACTIONS = {
 A.keyActions = KEY_ACTIONS
 local MODIFIERS = {LSHIFT = true, RSHIFT = true, LCTRL = true, RCTRL = true, LALT = true, RALT = true, LMETA = true, RMETA = true}
 local capturing
+local MODIFIER_NAMES = {SHIFT = "Shift", CTRL = "Ctrl", ALT = "Alt"}
 local function KeyText(action)
+    local modifier = A.db.keyModifier[action]
+    if modifier then return MODIFIER_NAMES[modifier] end
     local key = GetBindingKey and GetBindingKey(action)
     if not key then return "Not set" end
     return GetBindingText and GetBindingText(key) or key
@@ -760,6 +763,8 @@ end
 -- key nil clears the action's keys.
 function A.BindKey(action, key)
     if InCombatLockdown() or not SetBinding then print("Forever Names: keys can't be changed in combat."); return false end
+    A.ReleaseKey(action)
+    A.db.keyModifier[action] = nil
     for _, old in ipairs({GetBindingKey(action)}) do SetBinding(old) end
     if key then
         local previous = GetBindingAction and GetBindingAction(key)
@@ -771,11 +776,18 @@ function A.BindKey(action, key)
     if SaveBindings then SaveBindings(GetCurrentBindingSet and GetCurrentBindingSet() or 1) end
     return true
 end
+-- modifier: "SHIFT", "CTRL" or "ALT", held alone. Replaces the action's key.
+function A.SetModifierKey(action, modifier)
+    if not A.BindKey(action, nil) then return false end
+    A.db.keyModifier[action] = modifier
+    return true
+end
 StopCapture = function()
     if capturing then
         capturing.button:SetScript("OnKeyDown", nil)
+        capturing.button:SetScript("OnKeyUp", nil)
         capturing.button:EnableKeyboard(false)
-        capturing = nil
+        capturing, A.keyCapturing = nil, nil
     end
     if A.RefreshOptions then A.RefreshOptions() end
 end
@@ -783,10 +795,22 @@ StartCapture = function(action, button)
     if InCombatLockdown() then print("Forever Names: keys can't be changed in combat."); return end
     if capturing then StopCapture() end
     capturing = {action = action, button = button}
+    A.keyCapturing = true
     button:EnableKeyboard(true)
     if button.SetPropagateKeyboardInput then button:SetPropagateKeyboardInput(false) end
+    -- Shift, Ctrl or Alt pressed and released alone: that modifier is the key.
+    button:SetScript("OnKeyUp", function(_, key)
+        local modifier = A.modifierOf[key]
+        if modifier and capturing and capturing.modifier == modifier then
+            A.SetModifierKey(action, modifier)
+            StopCapture()
+        end
+    end)
     button:SetScript("OnKeyDown", function(_, key)
-        if MODIFIERS[key] then return end
+        if MODIFIERS[key] then
+            if capturing then capturing.modifier = A.modifierOf[key] end
+            return
+        end
         if key ~= "ESCAPE" then
             local combo = (IsAltKeyDown() and "ALT-" or "") .. (IsControlKeyDown() and "CTRL-" or "") .. (IsShiftKeyDown() and "SHIFT-" or "") .. key
             A.BindKey(action, combo)
@@ -849,16 +873,21 @@ local function BuildAll(kit, view, index)
             {more = perfNote})
         perf:End()
         local keys = right:Card("Keys")
-        keys:Note("Click a button, then press the key you want (Shift, Ctrl or Alt allowed). Esc cancels.")
+        keys:Note("Click, then press a key. Shift, Ctrl or Alt alone: hold. Esc cancels.")
         for _, entry in ipairs(KEY_ACTIONS) do
             keys:Note(entry[2], {width = 172, asLabel = true})
             local button
             button = keys:Button("", function()
                 if capturing and capturing.action == entry[1] then StopCapture() else StartCapture(entry[1], button) end
-            end, {same = true, width = 120, label = function()
-                return capturing and capturing.action == entry[1] and "Press a key..." or KeyText(entry[1])
+            end, {same = true, width = 104, label = function()
+                return capturing and capturing.action == entry[1] and "Press a key" or KeyText(entry[1])
             end, tip = entry[3]})
-            keys:Button("Clear", function() if A.BindKey(entry[1], nil) then A.RefreshOptions() end end, {same = true, width = 56})
+            keys:Button("Clear", function() if A.BindKey(entry[1], nil) then A.RefreshOptions() end end, {same = true, width = 52})
+            keys:Check("Hold", function() return A.KeyHolds(entry[1]) end, function(v)
+                A.ReleaseKey(entry[1])
+                db.keyHold[entry[1]] = v or nil
+                A.RefreshOptions()
+            end, {same = true, when = function() return not db.keyModifier[entry[1]] end})
         end
         keys:Button("", function() A.ToggleLabels() end,
             {width = 200, label = function() return A.allHidden and "Bring everything back" or "Hide everything now" end})
