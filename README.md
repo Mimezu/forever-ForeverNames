@@ -5,6 +5,17 @@ players in the open world. Every feature added since 1.7.0 has its own toggle.
 Since 1.18.0 a fresh install starts with the author's own setup (below);
 turn features off to get back to the plain 1.6.1 look.
 
+## 1.21.0 Trainer icons
+
+- NPCs > Which NPCs > Trainers: **Profession trainer icon** and **Class
+  trainer icon** (both off by default).
+- An icon shaped after the profession beside trainers of your own
+  professions, first aid, cooking and fishing included. A book in your class
+  color beside your class trainers.
+- Read from the subtitle (<Expert Blacksmith>, <Warrior Trainer>); suppliers
+  never match. Learning a profession updates the icons.
+- The icon sits where your People icons go.
+
 ## 1.20.0 Ways in
 
 - Minimap button: click opens, drag moves. Toggle under All names > Text & tools.

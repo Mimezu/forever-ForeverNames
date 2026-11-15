@@ -183,6 +183,159 @@ GLYPHS = {
 }
 
 
+# Trainer icons (1.20.0): one per profession, shaped after its WoW icon, and a
+# book for class trainers. Not in the relationship glyph picker.
+def rotated(draw_fn, angle):
+    img = Image.new('RGBA', (S, S), (0, 0, 0, 0))
+    draw_fn(ImageDraw.Draw(img))
+    return img.rotate(angle, resample=Image.BICUBIC, center=(256, 256))
+
+
+def anvil(d):
+    # Blacksmithing: an anvil with its horn, and a hammer above.
+    d.polygon([(40, 250), (150, 250), (180, 230), (470, 230), (470, 300), (380, 300),
+               (330, 360), (180, 360), (150, 300), (110, 300)], fill=W)
+    d.rectangle((210, 360, 300, 410), fill=W)
+    d.rounded_rectangle((140, 410, 370, 470), radius=10, fill=W)
+    d.rounded_rectangle((250, 40, 420, 120), radius=16, fill=W)    # hammer head
+    d.rectangle((150, 66, 260, 94), fill=W)                      # handle
+
+
+def flask(d):
+    # Alchemy: a round-bottom flask, its liquid line cut out.
+    d.rectangle((200, 40, 312, 76), fill=W)                      # lip
+    d.rectangle((222, 76, 290, 200), fill=W)                     # neck
+    d.ellipse((96, 160, 416, 480), fill=W)
+    d.line([(120, 300), (392, 300)], fill=(0, 0, 0, 0), width=16)
+
+
+def wand(d):
+    # Enchanting: a rod with a four-point spark at its tip.
+    def rod(g):
+        g.rounded_rectangle((232, 200, 280, 500), radius=20, fill=W)
+    img = rotated(rod, -40)
+    g = ImageDraw.Draw(img)
+    g.polygon(star_points(330, 170, 160, 40, 4), fill=W)
+    return img
+
+
+def gear(d):
+    # Engineering: a cog.
+    teeth = 9
+    pts = []
+    for i in range(teeth * 4):
+        a = math.radians(i * 360 / (teeth * 4))
+        r = 230 if (i % 4) in (1, 2) else 170
+        pts.append((256 + r * math.cos(a), 256 + r * math.sin(a)))
+    d.polygon(pts, fill=W)
+    d.ellipse((186, 186, 326, 326), fill=(0, 0, 0, 0))
+
+
+def pick(d):
+    # Mining: a pickaxe, its curved head across the handle.
+    def tool(g):
+        g.rounded_rectangle((230, 120, 282, 500), radius=20, fill=W)
+        g.chord((30, 70, 482, 330), 195, 345, fill=W)
+        g.chord((70, 150, 442, 360), 195, 345, fill=(0, 0, 0, 0))
+        g.rounded_rectangle((206, 100, 306, 170), radius=16, fill=W)
+    return rotated(tool, 30)
+
+
+def herb(d):
+    # Herbalism: a sprig with three leaves.
+    d.line([(256, 490), (256, 150)], fill=W, width=30)
+    for cx, cy, angle in ((256, 120, 0), (170, 250, 40), (342, 250, -40), (190, 380, 40), (322, 380, -40)):
+        leaf_img = Image.new('L', (S, S), 0)
+        ImageDraw.Draw(leaf_img).ellipse((cx - 50, cy - 95, cx + 50, cy + 95), fill=255)
+        leaf_img = leaf_img.rotate(angle, resample=Image.BICUBIC, center=(cx, cy + 60))
+        d.bitmap((0, 0), leaf_img, fill=W)
+
+
+def knife(d):
+    # Skinning: a skinning knife with a curved belly.
+    def tool(g):
+        g.polygon([(226, 290), (196, 200), (206, 120), (256, 56), (306, 30), (290, 130), (286, 290)], fill=W)
+        g.rounded_rectangle((186, 280, 326, 316), radius=12, fill=W)       # guard
+        g.rounded_rectangle((226, 316, 286, 490), radius=22, fill=W)       # grip
+    return rotated(tool, -30)
+
+
+def hide(d):
+    # Leatherworking: a stretched hide.
+    d.polygon([(110, 60), (200, 110), (312, 110), (402, 60), (380, 190), (450, 260), (380, 330),
+               (402, 452), (312, 402), (200, 402), (110, 452), (132, 330), (62, 260), (132, 190)], fill=W)
+
+
+def spool(d):
+    # Tailoring: a spool of thread and a needle.
+    d.rounded_rectangle((90, 60, 370, 110), radius=16, fill=W)
+    d.rounded_rectangle((90, 402, 370, 452), radius=16, fill=W)
+    d.rectangle((130, 110, 330, 402), fill=W)
+    for y in range(140, 400, 44):
+        d.line([(130, y), (330, y + 20)], fill=(0, 0, 0, 0), width=8)
+    d.polygon([(420, 40), (446, 40), (446, 420), (433, 480), (420, 420)], fill=W)
+    d.ellipse((424, 60, 442, 110), fill=(0, 0, 0, 0))
+
+
+def cross(d):
+    # First Aid: a cross.
+    d.rounded_rectangle((196, 60, 316, 452), radius=24, fill=W)
+    d.rounded_rectangle((60, 196, 452, 316), radius=24, fill=W)
+
+
+def hook(d):
+    # Fishing: a hook with its barb.
+    d.ellipse((222, 26, 290, 94), fill=W)
+    d.ellipse((240, 44, 272, 76), fill=(0, 0, 0, 0))
+    d.rectangle((240, 90, 272, 340), fill=W)
+    d.arc((110, 220, 402, 480), 0, 180, fill=W, width=34)
+    d.rectangle((110, 290, 144, 352), fill=W)
+    d.polygon([(127, 210), (84, 300), (170, 300)], fill=W)
+
+
+def pot(d):
+    # Cooking: a pot with a lid and handles.
+    d.rounded_rectangle((90, 200, 422, 440), radius=40, fill=W)
+    d.rounded_rectangle((70, 160, 442, 200), radius=14, fill=W)
+    d.ellipse((226, 100, 286, 160), fill=W)
+    d.rounded_rectangle((20, 240, 100, 280), radius=16, fill=W)
+    d.rounded_rectangle((412, 240, 492, 280), radius=16, fill=W)
+
+
+def gem(d):
+    # Jewelcrafting: a cut gem.
+    d.polygon([(130, 90), (382, 90), (480, 200), (256, 470), (32, 200)], fill=W)
+    d.line([(32, 200), (480, 200)], fill=(0, 0, 0, 0), width=14)
+    d.line([(190, 96), (150, 200), (256, 460)], fill=(0, 0, 0, 0), width=12)
+    d.line([(322, 96), (362, 200), (256, 460)], fill=(0, 0, 0, 0), width=12)
+
+
+def quill(d):
+    # Inscription: a feather quill.
+    def feather(g):
+        g.ellipse((176, 20, 336, 400), fill=W)
+        g.line([(256, 60), (256, 500)], fill=(0, 0, 0, 0), width=14)
+        g.polygon([(244, 400), (268, 400), (256, 500)], fill=W)
+    return rotated(feather, -35)
+
+
+def book(d):
+    # Class trainer: an open book.
+    d.polygon([(30, 110), (240, 140), (240, 440), (30, 410)], fill=W)
+    d.polygon([(482, 110), (272, 140), (272, 440), (482, 410)], fill=W)
+    for y in (200, 260, 320):
+        d.line([(70, y - 12), (210, y + 8)], fill=(0, 0, 0, 0), width=14)
+        d.line([(442, y - 12), (302, y + 8)], fill=(0, 0, 0, 0), width=14)
+
+
+GLYPHS.update({
+    'trade_anvil': anvil, 'trade_flask': flask, 'trade_wand': wand, 'trade_gear': gear,
+    'trade_pick': pick, 'trade_herb': herb, 'trade_knife': knife, 'trade_hide': hide,
+    'trade_spool': spool, 'trade_cross': cross, 'trade_hook': hook, 'trade_pot': pot,
+    'trade_gem': gem, 'trade_quill': quill, 'trade_book': book,
+})
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sheet = Image.new('RGBA', (len(GLYPHS) * 72 + 8, 80), (40, 30, 20, 255))

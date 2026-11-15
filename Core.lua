@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.20.0"
+A.version = "1.21.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -294,6 +294,8 @@ local function UpdatePlate(unit)
     if person and not role then color = db.colors.interactive end
     local title, titleComplete
     if role then title, titleComplete = CachedTitle(unit) end
+    -- Trainers of your professions and class (Trainers.lua).
+    if A.TrainerIcons then npcIcons = A.TrainerIcons(title, npcIcons, active[unit]) end
     local rendered = A.RenderPlate(plate, frame, unit, role or (person and "person") or nil, color, title, colorKey, nil, nil, npcIcons)
     if rendered == false then return true end -- unsupported layout: do not mutate it
     if not rendered then return nil end

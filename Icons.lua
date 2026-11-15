@@ -238,6 +238,8 @@ function A.ApplyPlateIcons(state, icons, nameHeight)
                 if key == "people" then
                     local personPath, color, mode, size = A.PersonIcon(icons.person)
                     path, tint, own = personPath or A.GlyphPath("dot"), Resolve(mode, color or {1, 1, 1}, state), tonumber(size)
+                elseif key == "trainer" then
+                    path, tint = A.GlyphPath(icons.trainerGlyph), icons.trainerColor or {1, 1, 1}
                 else
                     path, tint = A.GlyphPath(A.IconGlyph(key)), A.ResolveIconColor(key, nil, state)
                 end
@@ -271,6 +273,8 @@ function A.ApplyPlateIcons(state, icons, nameHeight)
     for i = 1, count do
         local key = icons[i]
         local own = key == "people" and select(5, A.PersonIcon(icons.person)) or key == "faction" and "left" or nil
+        -- Trainer icons go where your People icons go.
+        if key == "trainer" then own = db.peopleIconSide end
         local position = (own == "left" or own == "right") and own or (enemy and db.enemySwordsPosition or db.iconPosition)
         local row = rows[position] or rows.left
         row[#row + 1] = pool[i]

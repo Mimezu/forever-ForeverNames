@@ -723,6 +723,12 @@ local function BuildNPCs(kit, view, index)
     quests:Check("Show ! beside enemies for your quests", function() return db.questMark end, function(v) A.SetOption("questMark", v) end,
         {more = questNote})
     quests:End()
+    local trainers = left:Card("Trainers")
+    trainers:Check("Profession trainer icon", function() return db.iconsProfessionTrainer end,
+        function(v) A.SetOption("iconsProfessionTrainer", v) end, {tip = "Only your professions"})
+    trainers:Check("Class trainer icon", function() return db.iconsClassTrainer end,
+        function(v) A.SetOption("iconsClassTrainer", v) end, {tip = "Only your class"})
+    trainers:End()
     local fix = right:Card("Mislabeled NPC?")
     fix:Note("Target the NPC, then pick how it should be labeled. Auto returns it to automatic detection.")
     for i, entry in ipairs({{"Vendor", "vendor"}, {"Quest giver", "quest"}, {"Service", "interactive"}, {"Hide", "hidenpc"}, {"Auto", "auto"}}) do

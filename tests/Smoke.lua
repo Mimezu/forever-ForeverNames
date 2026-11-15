@@ -212,7 +212,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua','Launcher.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','Trainers.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua','Launcher.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -1226,6 +1226,55 @@ lateFrame:ApplyFrameOptions()
 equal(lateFrame.HealthBarsContainer.alpha,0,'native options refresh cannot expose a rendered health bar')
 local opposite,of=spawn('nameplate5',{id='50',name='Trainer',opposite=true,title='Hunter Trainer'});settle()
 equal(A.Classify('nameplate5'),'interactive','opposite trainer identified')
+-- Trainer icons: your professions and your class, where People icons go.
+do
+ local profs={[1]={'Blacksmithing',164},[2]={'Mining',186},[4]={'Fishing',356}}
+ function GetProfessions() return 1,2,nil,4,nil end
+ function GetProfessionInfo(i) local p=profs[i];if not p then return nil end;return p[1],'icon',1,75,0,0,p[2] end
+ local realClass=UnitClass
+ function UnitClass(u) if u=='player' then return 'Warrior','WARRIOR' end;if realClass then return realClass(u) end end
+ RAID_CLASS_COLORS={WARRIOR={r=.78,g=.61,b=.43}}
+ local function icon(frame)
+  local st=state(frame);local pool=st and st.overlay.icons
+  if not pool or not pool[1] or not pool[1].shown then return nil end
+  return pool[1].path,pool[1]
+ end
+ local _,smith=spawn('nameplate71',{id='71',name='James',cursor='Trainer',title='Expert Blacksmith'})
+ local _,smithT=spawn('nameplate72',{id='72',name='Smith 2',cursor='Trainer',title='Blacksmithing Trainer'})
+ local _,supplier=spawn('nameplate73',{id='73',name='Samuel',cursor='Buy',title='Blacksmithing Supplier'})
+ local _,tailor=spawn('nameplate74',{id='74',name='Tailor',cursor='Trainer',title='Tailoring Trainer'})
+ local _,warrior=spawn('nameplate75',{id='75',name='Warrior',cursor='Trainer',title='Warrior Trainer'})
+ local _,mage=spawn('nameplate76',{id='76',name='Mage',cursor='Trainer',title='Mage Trainer'})
+ local _,fisher=spawn('nameplate77',{id='77',name='Fisher',cursor='Trainer',title='Fishing Trainer'})
+ for i=71,77 do emit('NAME_PLATE_UNIT_ADDED','nameplate'..i) end
+ settle()
+ equal(A.defaults.iconsProfessionTrainer,false,'profession trainer icon off by default')
+ equal(icon(smith),nil,'off: no icon')
+ A.SetOption('iconsProfessionTrainer',true);settle()
+ check((icon(smith) or ''):find('trade_anvil',1,true),'Expert Blacksmith: anvil')
+ check((icon(smithT) or ''):find('trade_anvil',1,true),'Blacksmithing Trainer: anvil')
+ check((icon(fisher) or ''):find('trade_hook',1,true),'secondary professions too: fishing hook')
+ equal(icon(supplier),nil,'suppliers never match')
+ equal(icon(tailor),nil,'not your profession: no icon')
+ equal(icon(warrior),nil,'class icon has its own toggle')
+ local _,tex=icon(smith);equal(tex.tint[1],.75,'profession color')
+ A.SetOption('iconsClassTrainer',true);settle()
+ check((icon(warrior) or ''):find('trade_book',1,true),'your class trainer: book')
+ _,tex=icon(warrior);equal(tex.tint[1],.78,'in your class color')
+ equal(icon(mage),nil,'other classes: no icon')
+ -- Learning a profession: trainers of it get the icon.
+ profs[2]={'Tailoring',197}
+ for _,f in ipairs(frames) do if f.events and f.events.SKILL_LINES_CHANGED then f.scripts.OnEvent(f,'SKILL_LINES_CHANGED') end end
+ settle()
+ check((icon(tailor) or ''):find('trade_spool',1,true),'new profession: spool')
+ A.SetOption('iconsProfessionTrainer',false);settle()
+ equal(icon(smith),nil,'off again: gone')
+ check((icon(warrior) or ''):find('trade_book',1,true),'class icon stays')
+ A.SetOption('iconsClassTrainer',false);settle()
+ equal(icon(warrior),nil,'both off')
+ for i=71,77 do emit('NAME_PLATE_UNIT_REMOVED','nameplate'..i);units['nameplate'..i]=nil;plates['nameplate'..i]=nil end
+ GetProfessions,GetProfessionInfo,UnitClass=nil,nil,realClass
+end
 -- Text sizes inherit without reviving custom smoothing or writing CVars.
 local sizeWrites=cvarWrites
 A.db.textSizes={general={name=20,subtitle=12},vendor={name=28,subtitle=17},
