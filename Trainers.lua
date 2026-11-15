@@ -13,20 +13,20 @@ local function Public(value) return not issecretvalue or not issecretvalue(value
 -- By skill line: the glyph (shaped after the profession's WoW icon), its
 -- color, and what its trainers are called besides "<Profession> Trainer".
 local TRADES = {
-    [164] = {"trade_anvil", {0.75, 0.78, 0.84}, "blacksmithing", {"blacksmith"}},
-    [165] = {"trade_hide", {0.80, 0.55, 0.30}, "leatherworking", {"leatherworker"}},
-    [171] = {"trade_flask", {0.40, 0.90, 0.50}, "alchemy", {"alchemist"}},
-    [182] = {"trade_herb", {0.45, 0.85, 0.35}, "herbalism", {"herbalist"}},
-    [185] = {"trade_pot", {1.00, 0.60, 0.25}, "cooking", {"cook", "chef"}},
-    [186] = {"trade_pick", {0.85, 0.65, 0.40}, "mining", {"miner"}},
-    [197] = {"trade_spool", {0.90, 0.75, 0.95}, "tailoring", {"tailor"}},
-    [202] = {"trade_gear", {1.00, 0.70, 0.30}, "engineering", {"engineer"}},
-    [333] = {"trade_wand", {0.70, 0.50, 1.00}, "enchanting", {"enchanter"}},
-    [356] = {"trade_hook", {0.40, 0.70, 1.00}, "fishing", {"fisherman", "angler"}},
-    [393] = {"trade_knife", {0.85, 0.55, 0.40}, "skinning", {"skinner"}},
-    [129] = {"trade_cross", {1.00, 0.32, 0.32}, "first aid", {"physician", "trauma surgeon"}},
-    [755] = {"trade_gem", {0.40, 0.90, 1.00}, "jewelcrafting", {"jewelcrafter"}},
-    [773] = {"trade_quill", {0.90, 0.85, 0.70}, "inscription", {"scribe"}},
+    [164] = {"trade_anvil", {0.80, 0.88, 1.00}, "blacksmithing", {"blacksmith"}},
+    [165] = {"trade_hide", {1.00, 0.72, 0.40}, "leatherworking", {"leatherworker"}},
+    [171] = {"trade_flask", {0.45, 1.00, 0.55}, "alchemy", {"alchemist"}},
+    [182] = {"trade_herb", {0.55, 1.00, 0.40}, "herbalism", {"herbalist"}},
+    [185] = {"trade_pot", {1.00, 0.72, 0.30}, "cooking", {"cook", "chef"}},
+    [186] = {"trade_pick", {1.00, 0.80, 0.50}, "mining", {"miner"}},
+    [197] = {"trade_spool", {1.00, 0.75, 1.00}, "tailoring", {"tailor"}},
+    [202] = {"trade_gear", {1.00, 0.80, 0.35}, "engineering", {"engineer"}},
+    [333] = {"trade_wand", {0.80, 0.60, 1.00}, "enchanting", {"enchanter"}},
+    [356] = {"trade_hook", {0.45, 0.80, 1.00}, "fishing", {"fisherman", "angler"}},
+    [393] = {"trade_knife", {1.00, 0.65, 0.50}, "skinning", {"skinner"}},
+    [129] = {"trade_cross", {1.00, 0.40, 0.40}, "first aid", {"physician", "trauma surgeon"}},
+    [755] = {"trade_gem", {0.45, 1.00, 1.00}, "jewelcrafting", {"jewelcrafter"}},
+    [773] = {"trade_quill", {1.00, 0.94, 0.75}, "inscription", {"scribe"}},
 }
 A.trainerTrades = TRADES
 local RANKS = {"apprentice", "journeyman", "expert", "artisan", "master", "grand master"}
@@ -68,7 +68,9 @@ local function ClassTitle()
     local ok, name, classFile = pcall(UnitClass, "player")
     if not ok or not Public(name) or type(name) ~= "string" then return nil end
     local class = RAID_CLASS_COLORS and Public(classFile) and RAID_CLASS_COLORS[classFile]
-    return {name:lower() .. " trainer", class and {class.r, class.g, class.b} or {1, 0.82, 0.2}}
+    -- Your class color, lightened a third toward white so the small book reads.
+    local function Light(v) return v + (1 - v) * 0.35 end
+    return {name:lower() .. " trainer", class and {Light(class.r), Light(class.g), Light(class.b)} or {1, 0.82, 0.2}}
 end
 
 -- The trainer icon for a subtitle: glyph and color, or nil.

@@ -1257,10 +1257,10 @@ do
  equal(icon(supplier),nil,'suppliers never match')
  equal(icon(tailor),nil,'not your profession: no icon')
  equal(icon(warrior),nil,'class icon has its own toggle')
- local _,tex=icon(smith);equal(tex.tint[1],.75,'profession color')
+ local _,tex=icon(smith);equal(tex.tint[1],.8,'profession color')
  A.SetOption('iconsClassTrainer',true);settle()
  check((icon(warrior) or ''):find('trade_book',1,true),'your class trainer: book')
- _,tex=icon(warrior);equal(tex.tint[1],.78,'in your class color')
+ _,tex=icon(warrior);check(math.abs(tex.tint[1]-(.78+.22*.35))<1e-9,'in your class color, lightened')
  equal(icon(mage),nil,'other classes: no icon')
  -- Learning a profession: trainers of it get the icon.
  profs[2]={'Tailoring',197}

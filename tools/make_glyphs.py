@@ -192,13 +192,11 @@ def rotated(draw_fn, angle):
 
 
 def anvil(d):
-    # Blacksmithing: an anvil with its horn, and a hammer above.
-    d.polygon([(40, 250), (150, 250), (180, 230), (470, 230), (470, 300), (380, 300),
-               (330, 360), (180, 360), (150, 300), (110, 300)], fill=W)
-    d.rectangle((210, 360, 300, 410), fill=W)
-    d.rounded_rectangle((140, 410, 370, 470), radius=10, fill=W)
-    d.rounded_rectangle((250, 40, 420, 120), radius=16, fill=W)    # hammer head
-    d.rectangle((150, 66, 260, 94), fill=W)                      # handle
+    # Blacksmithing: a bold anvil (horn, face, waist, foot).
+    d.polygon([(10, 150), (120, 130), (150, 110), (502, 110), (502, 250), (400, 250),
+               (340, 330), (172, 330), (130, 250), (90, 230)], fill=W)
+    d.rectangle((190, 320, 322, 380), fill=W)
+    d.rounded_rectangle((90, 370, 422, 460), radius=18, fill=W)
 
 
 def flask(d):
@@ -212,10 +210,10 @@ def flask(d):
 def wand(d):
     # Enchanting: a rod with a four-point spark at its tip.
     def rod(g):
-        g.rounded_rectangle((232, 200, 280, 500), radius=20, fill=W)
+        g.rounded_rectangle((218, 200, 294, 510), radius=30, fill=W)
     img = rotated(rod, -40)
     g = ImageDraw.Draw(img)
-    g.polygon(star_points(330, 170, 160, 40, 4), fill=W)
+    g.polygon(star_points(320, 180, 190, 64, 4), fill=W)
     return img
 
 
@@ -234,10 +232,10 @@ def gear(d):
 def pick(d):
     # Mining: a pickaxe, its curved head across the handle.
     def tool(g):
-        g.rounded_rectangle((230, 120, 282, 500), radius=20, fill=W)
-        g.chord((30, 70, 482, 330), 195, 345, fill=W)
-        g.chord((70, 150, 442, 360), 195, 345, fill=(0, 0, 0, 0))
-        g.rounded_rectangle((206, 100, 306, 170), radius=16, fill=W)
+        g.rounded_rectangle((222, 120, 290, 510), radius=26, fill=W)
+        g.chord((10, 40, 502, 340), 195, 345, fill=W)
+        g.chord((70, 150, 442, 370), 195, 345, fill=(0, 0, 0, 0))
+        g.rounded_rectangle((196, 90, 316, 180), radius=20, fill=W)
     return rotated(tool, 30)
 
 
@@ -252,11 +250,11 @@ def herb(d):
 
 
 def knife(d):
-    # Skinning: a skinning knife with a curved belly.
+    # Skinning: a skinning knife with a wide curved belly.
     def tool(g):
-        g.polygon([(226, 290), (196, 200), (206, 120), (256, 56), (306, 30), (290, 130), (286, 290)], fill=W)
-        g.rounded_rectangle((186, 280, 326, 316), radius=12, fill=W)       # guard
-        g.rounded_rectangle((226, 316, 286, 490), radius=22, fill=W)       # grip
+        g.polygon([(220, 300), (160, 210), (170, 110), (250, 40), (330, 10), (316, 130), (300, 300)], fill=W)
+        g.rounded_rectangle((170, 286, 350, 330), radius=14, fill=W)       # guard
+        g.rounded_rectangle((216, 326, 304, 506), radius=30, fill=W)       # grip
     return rotated(tool, -30)
 
 
@@ -284,13 +282,13 @@ def cross(d):
 
 
 def hook(d):
-    # Fishing: a hook with its barb.
-    d.ellipse((222, 26, 290, 94), fill=W)
-    d.ellipse((240, 44, 272, 76), fill=(0, 0, 0, 0))
-    d.rectangle((240, 90, 272, 340), fill=W)
-    d.arc((110, 220, 402, 480), 0, 180, fill=W, width=34)
-    d.rectangle((110, 290, 144, 352), fill=W)
-    d.polygon([(127, 210), (84, 300), (170, 300)], fill=W)
+    # Fishing: a bold hook with its barb.
+    d.ellipse((206, 10, 306, 110), fill=W)
+    d.ellipse((236, 40, 276, 80), fill=(0, 0, 0, 0))
+    d.rectangle((228, 100, 284, 330), fill=W)
+    d.arc((90, 200, 422, 500), 0, 180, fill=W, width=56)
+    d.rectangle((90, 270, 146, 352), fill=W)
+    d.polygon([(118, 170), (56, 300), (180, 300)], fill=W)
 
 
 def pot(d):
@@ -313,9 +311,9 @@ def gem(d):
 def quill(d):
     # Inscription: a feather quill.
     def feather(g):
-        g.ellipse((176, 20, 336, 400), fill=W)
-        g.line([(256, 60), (256, 500)], fill=(0, 0, 0, 0), width=14)
-        g.polygon([(244, 400), (268, 400), (256, 500)], fill=W)
+        g.ellipse((150, 10, 362, 420), fill=W)
+        g.line([(256, 60), (256, 500)], fill=(0, 0, 0, 0), width=16)
+        g.polygon([(238, 410), (274, 410), (256, 510)], fill=W)
     return rotated(feather, -35)
 
 

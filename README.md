@@ -5,6 +5,11 @@ players in the open world. Every feature added since 1.7.0 has its own toggle.
 Since 1.18.0 a fresh install starts with the author's own setup (below);
 turn features off to get back to the plain 1.6.1 look.
 
+## 1.21.1 Bolder trainer icons
+
+- Profession trainer icons are bolder (the size of the group icon) and
+  brighter; the class trainer book is a lighter shade of your class color.
+
 ## 1.21.0 Trainer icons
 
 - NPCs > Which NPCs > Trainers: **Profession trainer icon** and **Class

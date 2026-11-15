@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.21.0"
+A.version = "1.21.1"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
