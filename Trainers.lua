@@ -32,8 +32,9 @@ A.trainerTrades = TRADES
 local RANKS = {"apprentice", "journeyman", "expert", "artisan", "master", "grand master"}
 local CLASS_GLYPH = "trade_book"
 
--- Your professions: lowercase trainer subtitles -> {glyph, color}.
-local professionTitles, classTitle, signature
+-- Your professions: lowercase trainer subtitles -> {glyph, color}. Bare
+-- trade names (<Miner>) count only on an NPC with the trainer cursor.
+local professionTitles, bareTitles, classTitle, signature
 local matches = {}
 local function Add(titles, words, entry)
     for _, word in ipairs(words) do
@@ -43,6 +44,7 @@ local function Add(titles, words, entry)
 end
 local function Professions()
     local titles, lines = {}, {}
+    bareTitles = {}
     signature = ""
     if not GetProfessions or not GetProfessionInfo then return titles end
     local ok, a, b, c, d, e = pcall(GetProfessions)
@@ -57,7 +59,10 @@ local function Professions()
             -- The game's own (localized) name, as "<Name> Trainer".
             if type(name) == "string" and name ~= "" then words[#words + 1] = name:lower() end
             Add(titles, words, entry)
-            if trade then Add(titles, trade[4], entry) end
+            if trade then
+                Add(titles, trade[4], entry)
+                for _, noun in ipairs(trade[4]) do bareTitles[noun] = entry end
+            end
         end
     end
     table.sort(lines)
@@ -73,8 +78,8 @@ local function ClassTitle()
     return {name:lower() .. " trainer", class and {Light(class.r), Light(class.g), Light(class.b)} or {1, 0.82, 0.2}}
 end
 
--- The trainer icon for a subtitle: glyph and color, or nil.
-function A.TrainerMatch(title)
+-- The trainer icon for a subtitle (and the NPC wearing it): glyph and color, or nil.
+function A.TrainerMatch(title, unit)
     local db = A.db
     if type(title) ~= "string" or not Public(title) or not (db.iconsProfessionTrainer or db.iconsClassTrainer) then return nil end
     local key = title:lower():gsub("^%s*<", ""):gsub(">%s*$", "")
@@ -88,18 +93,23 @@ function A.TrainerMatch(title)
         elseif classTitle and key == classTitle[1] then found = {kind = "class", glyph = CLASS_GLYPH, color = classTitle[2]} end
         matches[key] = found
     end
-    if not found then return nil end
+    if not found then
+        -- <Miner>: a trainer only if the game shows the trainer cursor on it.
+        local bare = db.iconsProfessionTrainer and bareTitles and bareTitles[key]
+        if bare and unit and A.IsTrainerUnit and A.IsTrainerUnit(unit) then return bare[1], bare[2] end
+        return nil
+    end
     if found.kind == "profession" and not db.iconsProfessionTrainer then return nil end
     if found.kind == "class" and not db.iconsClassTrainer then return nil end
     return found.glyph, found.color
 end
 
 -- Adds the trainer icon to an NPC's icon list (after its People icon).
-function A.TrainerIcons(title, icons, record)
+function A.TrainerIcons(title, icons, record, unit)
     if icons then
         for i = #icons, 1, -1 do if icons[i] == "trainer" then table.remove(icons, i) end end
     end
-    local glyph, color = A.TrainerMatch(title)
+    local glyph, color = A.TrainerMatch(title, unit)
     if not glyph then return icons end
     if not icons then
         icons = record and record.trainerIcons or {}

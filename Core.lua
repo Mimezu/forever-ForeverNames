@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.21.1"
+A.version = "1.21.2"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -54,6 +54,7 @@ local function CopyTable(value)
     return copy
 end
 local active, db, scanTexture, lookupTexture = {}, nil, nil, nil
+local trainerCursor
 local QueueUnit
 local function Now() return GetTime and GetTime() or 0 end
 local cursorRoles = {}
@@ -96,8 +97,17 @@ local function BuildCursorMap()
             local id = lookupTexture:GetTexture()
             if id and id ~= 0 then cursorRoles[id] = role end
             cursorRoles[path:lower()] = role
+            if name == "Trainer" then trainerCursor = {id, path:lower()} end
         end
     end
+end
+-- The NPC shows the trainer cursor (a book): for subtitles that only name a
+-- trade, like <Miner>, which vendors may carry too.
+function A.IsTrainerUnit(unit)
+    if not trainerCursor then return false end
+    local _, texture, atlas = A.CursorRole(unit)
+    if texture ~= nil and (texture == trainerCursor[1] or (type(texture) == "string" and texture:lower() == trainerCursor[2])) then return true end
+    return type(atlas) == "string" and atlas:lower():find("trainer", 1, true) ~= nil
 end
 function A.CursorRole(unit)
     if not scanTexture or not SetUnitCursorTexture then return nil end
@@ -295,7 +305,7 @@ local function UpdatePlate(unit)
     local title, titleComplete
     if role then title, titleComplete = CachedTitle(unit) end
     -- Trainers of your professions and class (Trainers.lua).
-    if A.TrainerIcons then npcIcons = A.TrainerIcons(title, npcIcons, active[unit]) end
+    if A.TrainerIcons then npcIcons = A.TrainerIcons(title, npcIcons, active[unit], unit) end
     local rendered = A.RenderPlate(plate, frame, unit, role or (person and "person") or nil, color, title, colorKey, nil, nil, npcIcons)
     if rendered == false then return true end -- unsupported layout: do not mutate it
     if not rendered then return nil end

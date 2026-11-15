@@ -1246,7 +1246,9 @@ do
  local _,warrior=spawn('nameplate75',{id='75',name='Warrior',cursor='Trainer',title='Warrior Trainer'})
  local _,mage=spawn('nameplate76',{id='76',name='Mage',cursor='Trainer',title='Mage Trainer'})
  local _,fisher=spawn('nameplate77',{id='77',name='Fisher',cursor='Trainer',title='Fishing Trainer'})
- for i=71,77 do emit('NAME_PLATE_UNIT_ADDED','nameplate'..i) end
+ local _,miner=spawn('nameplate78',{id='78',name='Johan',cursor='Trainer',title='Miner'})
+ local _,minerVendor=spawn('nameplate79',{id='79',name='Ore seller',cursor='Buy',title='Miner'})
+ for i=71,79 do emit('NAME_PLATE_UNIT_ADDED','nameplate'..i) end
  settle()
  equal(A.defaults.iconsProfessionTrainer,false,'profession trainer icon off by default')
  equal(icon(smith),nil,'off: no icon')
@@ -1255,6 +1257,8 @@ do
  check((icon(smithT) or ''):find('trade_anvil',1,true),'Blacksmithing Trainer: anvil')
  check((icon(fisher) or ''):find('trade_hook',1,true),'secondary professions too: fishing hook')
  equal(icon(supplier),nil,'suppliers never match')
+ check((icon(miner) or ''):find('trade_pick',1,true),'<Miner> with the trainer cursor: pick')
+ equal(icon(minerVendor),nil,'<Miner> without it: nothing')
  equal(icon(tailor),nil,'not your profession: no icon')
  equal(icon(warrior),nil,'class icon has its own toggle')
  local _,tex=icon(smith);equal(tex.tint[1],.8,'profession color')
@@ -1272,7 +1276,7 @@ do
  check((icon(warrior) or ''):find('trade_book',1,true),'class icon stays')
  A.SetOption('iconsClassTrainer',false);settle()
  equal(icon(warrior),nil,'both off')
- for i=71,77 do emit('NAME_PLATE_UNIT_REMOVED','nameplate'..i);units['nameplate'..i]=nil;plates['nameplate'..i]=nil end
+ for i=71,79 do emit('NAME_PLATE_UNIT_REMOVED','nameplate'..i);units['nameplate'..i]=nil;plates['nameplate'..i]=nil end
  GetProfessions,GetProfessionInfo,UnitClass=nil,nil,realClass
 end
 -- Text sizes inherit without reviving custom smoothing or writing CVars.
