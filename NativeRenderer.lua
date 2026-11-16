@@ -341,8 +341,8 @@ function A.RenderPlate(plate, frame, unit, role, color, title, sizeKey, level, l
     -- label belongs to the old plate, so start over on this one.
     if state and (state.unit ~= unit or state.keepBars ~= keepBars or state.overlay ~= overlay) then A.RestorePlate(frame); state = nil end
     -- This plate's label may still be held by a frame that left it.
-    local holder = overlay.owner
-    if holder and holder ~= frame and states[holder] and states[holder].overlay == overlay then A.RestorePlate(holder) end
+    local previous = overlay.owner
+    if previous and previous ~= frame and states[previous] and states[previous].overlay == overlay then A.RestorePlate(previous) end
     overlay.owner = frame
     if not state then
         -- Promote the arrival owner itself. Its masks are already applied; no
