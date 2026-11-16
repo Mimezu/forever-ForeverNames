@@ -1226,6 +1226,42 @@ lateFrame:ApplyFrameOptions()
 equal(lateFrame.HealthBarsContainer.alpha,0,'native options refresh cannot expose a rendered health bar')
 local opposite,of=spawn('nameplate5',{id='50',name='Trainer',opposite=true,title='Hunter Trainer'});settle()
 equal(A.Classify('nameplate5'),'interactive','opposite trainer identified')
+-- Blizzard pools nameplate unit frames: a frame moves between plates. A
+-- label must never stay behind on the old plate (a second copy of a name).
+do
+ local p1,f1=spawn('nameplate81',{id='81',name='Pool X',cursor='Buy',title='General Goods'})
+ emit('NAME_PLATE_UNIT_ADDED','nameplate81');settle()
+ local o1=state(f1).overlay
+ equal(o1.shown,true,'pooled frame: label drawn')
+ -- The frame goes back to the pool before addons hear of the removal.
+ p1.UnitFrame=nil;emit('NAME_PLATE_UNIT_REMOVED','nameplate81');units.nameplate81=nil
+ equal(o1.shown,false,'plate lost its unit, frame already pooled: label hidden')
+ equal(state(f1),nil,'and that frame holds no label')
+ -- The plate gets another unit with another frame.
+ local _,f2=spawn('nameplate82',{id='82',name='Pool Y',cursor='Buy',title='General Goods'})
+ plates.nameplate82=p1;p1.UnitFrame=f2
+ emit('NAME_PLATE_UNIT_ADDED','nameplate82');settle()
+ equal(state(f2).overlay,o1,'the plate keeps its label for the new unit')
+ equal(o1.name.text,'Pool Y','showing the new unit')
+ -- The first frame comes back, for the first unit, on another plate.
+ local p3=spawn('nameplate81',{id='81',name='Pool X',cursor='Buy',title='General Goods'})
+ p3.UnitFrame=f1;f1.unit='nameplate81'
+ emit('NAME_PLATE_UNIT_ADDED','nameplate81');settle()
+ local o3=state(f1).overlay
+ check(o3~=o1,'the returning frame draws on its new plate')
+ equal(o3.name.text,'Pool X','its own name there')
+ equal(o1.name.text,'Pool Y','the other plate keeps its own name')
+ local copies=0
+ for _,o in ipairs({o1,o3}) do if o.shown and o.name.text=='Pool X' then copies=copies+1 end end
+ equal(copies,1,'one name, never two')
+ -- Same, with a cleanup the game skipped: the frame moves while still held.
+ local p4=spawn('nameplate83',{id='83',name='Pool Z',cursor='Buy',title='General Goods'})
+ p4.UnitFrame=f1;plates.nameplate81=p4;f1.unit='nameplate81'
+ A.Update('nameplate81')
+ equal(o3.shown,false,'moved without cleanup: the old label goes')
+ equal(state(f1).overlay.parent,p4,'and the frame draws on its new plate')
+ for _,u in ipairs({'nameplate81','nameplate82','nameplate83'}) do emit('NAME_PLATE_UNIT_REMOVED',u);units[u]=nil;plates[u]=nil end
+end
 -- Trainer icons: your professions and your class, where People icons go.
 do
  local profs={[1]={'Blacksmithing',164},[2]={'Mining',186},[4]={'Fishing',356}}

@@ -201,13 +201,34 @@ function A.IsPrimedPlate(frame, unit)
 end
 function A.RestorePlate(frame)
     if A.ReleaseTargetHealthPlate then A.ReleaseTargetHealthPlate(states[frame]) end
+    -- Our label is ours to hide at any time, even when the native frame is
+    -- locked (combat): a label left shown is a second copy of a name.
+    local current = states[frame]
+    -- (Not when another frame has taken over that plate's label since.)
+    local mine = current and current.overlay and (current.overlay.owner == nil or current.overlay.owner == frame)
+    if mine then current.overlay:Hide() end
     if not Usable(frame) then return end
     ReleasePrime(frame)
     local state = states[frame]
     if not state then return end
     states[frame] = nil
-    state.overlay:Hide()
+    if mine then state.overlay:Hide() end
+    if state.overlay.owner == frame then state.overlay.owner = nil end
     for _, saved in ipairs(state.hiddenRegions) do A.ReleaseNativeRegion(state, saved.region) end
+end
+
+-- A plate lost its unit: drop every label on it, whichever frame holds it.
+function A.ReleasePlate(plate, unit)
+    for frame, state in pairs(states) do
+        if state.plate == plate or state.unit == unit then A.RestorePlate(frame) end
+    end
+    for frame, pending in pairs(primed) do
+        if pending.unit == unit then
+            if Usable(frame) then ReleasePrime(frame) end
+        end
+    end
+    local overlay = overlays[plate]
+    if overlay then overlay:Hide() end
 end
 
 local function HookFrame(frame)
@@ -316,7 +337,13 @@ function A.RenderPlate(plate, frame, unit, role, color, title, sizeKey, level, l
     end
     keepBars = keepBars and true or false
     local state = states[frame]
-    if state and (state.unit ~= unit or state.keepBars ~= keepBars) then A.RestorePlate(frame); state = nil end
+    -- Blizzard pools the unit frames: one can move to another plate. Its
+    -- label belongs to the old plate, so start over on this one.
+    if state and (state.unit ~= unit or state.keepBars ~= keepBars or state.overlay ~= overlay) then A.RestorePlate(frame); state = nil end
+    -- This plate's label may still be held by a frame that left it.
+    local holder = overlay.owner
+    if holder and holder ~= frame and states[holder] and states[holder].overlay == overlay then A.RestorePlate(holder) end
+    overlay.owner = frame
     if not state then
         -- Promote the arrival owner itself. Its masks are already applied; no
         -- second region list, ownership transfer, or repeat alpha writes needed.

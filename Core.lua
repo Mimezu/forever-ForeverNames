@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.21.2"
+A.version = "1.21.3"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -616,6 +616,8 @@ events:SetScript("OnEvent", function(_, event, arg)
             local frame = plate.UnitFrame
             local state = frame and A.RenderStates[frame]
             if (state and state.unit == arg) or (A.IsPrimedPlate and A.IsPrimedPlate(frame, arg)) then Restore(frame) end
+            -- The unit frame may already be back in Blizzard's pool.
+            if A.ReleasePlate then A.ReleasePlate(plate, arg) end
         end
     elseif event == "PLAYER_REGEN_ENABLED" then
         if A.pendingCVars then A.ApplyCVars(); A.Refresh() end
