@@ -2029,12 +2029,12 @@ do
 end
 -- Hide everything: every name and nameplate, then exactly what you had.
 do
- cvars.UnitNameOwn='1';cvars.nameplateShowSelf='0'
+ cvars.UnitNameOwn='1';cvars.nameplateShowSelf='0';cvars.SoftTargetNameplateEnemy='1';cvars.SoftTargetNameplateInteract='1'
  local before={}
  for k,v in pairs(cvars) do before[k]=v end
  A.ToggleLabels(true)
  equal(A.labelsHidden,true,'hide everything fades our labels')
- for _,name in ipairs({'nameplateShowEnemies','nameplateShowFriends','nameplateShowFriendlyNpcs','UnitNameOwn','UnitNameEnemyPlayerName','UnitNameFriendlyPlayerName'}) do
+ for _,name in ipairs({'nameplateShowEnemies','nameplateShowFriends','nameplateShowFriendlyNpcs','UnitNameOwn','UnitNameEnemyPlayerName','UnitNameFriendlyPlayerName','SoftTargetNameplateEnemy','SoftTargetNameplateInteract'}) do
   equal(cvars[name],'0','hide everything turns off '..name)
  end
  check(cvars.UnitNameGuildTitle==nil,'settings the client lacks are left alone')

@@ -9,6 +9,8 @@ local HIDE = {
     -- Nameplates
     "nameplateShowEnemies", "nameplateShowFriends", "nameplateShowFriendlyPlayers",
     "nameplateShowFriendlyNpcs", "nameplateShowSelf", "nameplateShowPersonal",
+    -- The plate on the unit you face (keyboard mode; gamepad mode turns these off)
+    "SoftTargetNameplateEnemy", "SoftTargetNameplateFriend", "SoftTargetNameplateInteract",
     -- Names over characters
     "UnitNameOwn", "UnitNameNPC", "UnitNameHostleNPC", "UnitNameInteractiveNPC",
     "UnitNameFriendlySpecialNPCName", "UnitNameNonCombatCreatureName",

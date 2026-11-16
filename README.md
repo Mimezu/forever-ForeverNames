@@ -5,6 +5,11 @@ players in the open world. Every feature added since 1.7.0 has its own toggle.
 Since 1.18.0 a fresh install starts with the author's own setup (below);
 turn features off to get back to the plain 1.6.1 look.
 
+## 1.21.4 Hide everything: the plate you face
+
+- The hide key also hides the small plate on the unit you face (keyboard
+  mode), and brings it back.
+
 ## 1.21.3 Doubled names, the real cause
 
 - Fixed: a name and its subtitle sometimes showed twice, slightly offset.
