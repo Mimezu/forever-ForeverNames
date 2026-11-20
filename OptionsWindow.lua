@@ -1103,8 +1103,8 @@ local function BuildWindow()
         end
         Select(index or tonumber(db.optionsPage) or 1)
         if view and pages[pageIndex].views[view] then pages[pageIndex].select(view) end
-        frame:Show()
-        Refresh()
+        -- Showing runs Refresh (OnShow).
+        if frame:IsShown() then Refresh() else frame:Show() end
     end
     Select(tonumber(db.optionsPage) or 1)
     return {frame = frame, pages = pages, tabs = tabs, close = close, Select = Select, Refresh = Refresh, Open = Open,
