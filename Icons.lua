@@ -178,6 +178,7 @@ function A.LayoutIcons(pool, count, name, nameHeight, level, levelSide, levelGap
     end
 end
 
+local ICON_SIDES = {"left", "right", "above"}
 -- Shows `icons` on a plate overlay; textures are created on first use.
 function A.ApplyPlateIcons(state, icons, nameHeight)
     local overlay = state.overlay
@@ -195,6 +196,7 @@ function A.ApplyPlateIcons(state, icons, nameHeight)
             end
             local key = icons[i]
             local mask = texture.flatMask
+            texture.personSide = nil -- a person's own side (set below), read by the layout
             if key == "faction" then
                 local atlas = icons.factionAtlas
                 local tint = icons.factionTint
@@ -236,7 +238,8 @@ function A.ApplyPlateIcons(state, icons, nameHeight)
                 if texture.SetDesaturated then texture:SetDesaturated(false) end
                 local path, tint, own
                 if key == "people" then
-                    local personPath, color, mode, size = A.PersonIcon(icons.person)
+                    local personPath, color, mode, size, side = A.PersonIcon(icons.person)
+                    texture.personSide = side
                     path, tint, own = personPath or A.GlyphPath("dot"), Resolve(mode, color or {1, 1, 1}, state), tonumber(size)
                 elseif key == "trainer" then
                     path, tint = A.GlyphPath(icons.trainerGlyph), icons.trainerColor or {1, 1, 1}
@@ -265,14 +268,14 @@ function A.ApplyPlateIcons(state, icons, nameHeight)
     local db = A.db
     local rows = overlay.iconRows or {}
     overlay.iconRows = rows
-    for _, position in ipairs({"left", "right", "above"}) do
+    for _, position in ipairs(ICON_SIDES) do
         local row = rows[position] or {}
         rows[position] = row
         for i = #row, 1, -1 do row[i] = nil end
     end
     for i = 1, count do
         local key = icons[i]
-        local own = key == "people" and select(5, A.PersonIcon(icons.person)) or key == "faction" and "left" or nil
+        local own = key == "people" and pool[i].personSide or key == "faction" and "left" or nil
         -- Trainer icons go where your People icons go.
         if key == "trainer" then own = db.peopleIconSide end
         local position = (own == "left" or own == "right") and own or (enemy and db.enemySwordsPosition or db.iconPosition)
