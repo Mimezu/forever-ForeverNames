@@ -12,6 +12,7 @@ turn features off to get back to the plain 1.6.1 look.
 - "Reset bar" keeps "Show their level".
 - Enemy range checks pause in combat, like level range checks.
 - Settings window built on first open, not at login.
+- Settings page "Open" closes Settings with its own Close button.
 
 ## 1.21.4 Hide everything: the plate you face
 

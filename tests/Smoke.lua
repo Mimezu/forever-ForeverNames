@@ -47,6 +47,9 @@ function M:SetScale(v) self.scale=v end
 function M:SetClampedToScreen() end
 function M:RegisterForDrag() end
 function M:RegisterForClicks(...) self.clicks={...} end
+function M:SetAttribute(k,v) self.attributes=self.attributes or {};self.attributes[k]=v end
+function M:GetAttribute(k) return self.attributes and self.attributes[k] end
+function M:IsVisible() return self.shown and (not self.parent or self.parent.IsVisible==nil or self.parent:IsVisible()) end
 function M:EnableMouseWheel() end
 function M:GetVerticalScrollRange() return 100 end
 function M:GetVerticalScroll() return self.scroll or 0 end
@@ -2222,7 +2225,7 @@ do
  local open,minimapBox,keyButtons,hint={},nil,{},nil
  for _,f in ipairs(frames) do
   if f.parent==page then
-   if f.text=='Open' then open=f
+   if f.label and f.label.text=='Open' then open=f
    elseif f.kind=='CheckButton' then minimapBox=f
    elseif f.kind=='Button' and f.text~='Clear' then keyButtons[#keyButtons+1]=f end
   end
@@ -2234,13 +2237,17 @@ do
  equal(button.shown,false,'the box hides the icon')
  minimapBox.checked=true;minimapBox.scripts.OnClick(minimapBox)
  equal(button.shown,true,'and shows it')
- SettingsPanel=object()
- local hidden
- HideUIPanel=function(f) hidden=f;f:Hide() end
- open.scripts.OnClick(open)
- equal(hidden,SettingsPanel,'Open closes Settings first')
+ -- Open hands its click to Settings' own Close button (no HideUIPanel).
+ SettingsPanel=object();SettingsPanel.CloseButton=object();SettingsPanel.CloseButton.parent=SettingsPanel
+ open.scripts.PreClick(open)
+ equal(open:GetAttribute('type'),'click','Open clicks a button')
+ equal(open:GetAttribute('clickbutton'),SettingsPanel.CloseButton,'the Settings Close button')
+ open.scripts.PostClick(open)
  equal(window.shown,true,'and opens the window')
- window:Hide();SettingsPanel,HideUIPanel=nil,nil
+ window:Hide()
+ SettingsPanel.CloseButton.forbidden=true;open.scripts.PreClick(open)
+ equal(open:GetAttribute('type'),nil,'never a forbidden button')
+ SettingsPanel=nil
  -- A key set from the Settings page.
  local windowKey=keyButtons[5]
  function windowKey:EnableKeyboard(v) self.keyboard=v end

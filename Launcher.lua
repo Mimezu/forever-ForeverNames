@@ -78,9 +78,13 @@ function A.SetMinimapIcon(shown)
 end
 
 -- Page in Blizzard's Settings -----------------------------------------------
-local function IsGamepadInterface()
-    return C_InputInterfaceStyle and C_InputInterfaceStyle.GetCurrentStyle and Enum and Enum.InputDeviceInterfaceType
-        and C_InputInterfaceStyle.GetCurrentStyle() == Enum.InputDeviceInterfaceType.Gamepad or false
+-- Settings' own close button, when it can take a click.
+local function SettingsCloseButton()
+    if not SettingsPanel then return end
+    for _, key in ipairs({"ClosePanelButton", "CloseButton"}) do
+        local button = SettingsPanel[key]
+        if button and not (button.IsForbidden and button:IsForbidden()) and button:IsVisible() then return button end
+    end
 end
 local function BuildPage()
     local panel = CreateFrame("Frame")
@@ -88,18 +92,26 @@ local function BuildPage()
     local heading = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", 16, -16)
     heading:SetText("Forever Names")
-    local open = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    -- Open hands its hardware click to Settings' own Close button (addon calls
+    -- into Blizzard's panel code taint the gamepad focus manager), then shows
+    -- our window. Same as Forever Windows.
+    local open = CreateFrame("Button", nil, panel, "InsecureActionButtonTemplate")
     open:SetSize(140, 26)
     open:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -14)
-    open:SetText("Open")
-    open:SetScript("OnClick", function()
-        -- Closing a Blizzard panel from addon code runs the gamepad window manager
-        -- with addon taint, so in the gamepad interface Settings stays open behind.
-        if SettingsPanel and SettingsPanel:IsShown() and not IsGamepadInterface() and HideUIPanel then
-            HideUIPanel(SettingsPanel)
-        end
-        A.OpenOptions()
+    open:RegisterForClicks("LeftButtonUp")
+    open:SetAttribute("useOnKeyDown", false)
+    local label = open:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("CENTER")
+    label:SetText("Open")
+    open.label = label
+    if A.OptionsSkin then A.OptionsSkin.Button(open) end
+    open:SetScript("PreClick", function()
+        if InCombatLockdown() then return end
+        local close = SettingsCloseButton()
+        open:SetAttribute("type", close and "click" or nil)
+        open:SetAttribute("clickbutton", close)
     end)
+    open:SetScript("PostClick", function() A.OpenOptions() end)
     local hint = panel:CreateFontString(nil, "ARTWORK", "GameFontDisable")
     hint:SetPoint("LEFT", open, "RIGHT", 12, 0)
     hint:SetText("/fnames")
