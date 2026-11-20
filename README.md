@@ -5,6 +5,14 @@ players in the open world. Every feature added since 1.7.0 has its own toggle.
 Since 1.18.0 a fresh install starts with the author's own setup (below);
 turn features off to get back to the plain 1.6.1 look.
 
+## 1.21.5 Tidy-up
+
+- Ticking "Show their level" or the health bar updates the selected
+  player's plate at once.
+- "Reset bar" keeps "Show their level".
+- Enemy range checks pause in combat, like level range checks.
+- Settings window built on first open, not at login.
+
 ## 1.21.4 Hide everything: the plate you face
 
 - The hide key also hides the small plate on the unit you face (keyboard
