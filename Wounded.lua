@@ -107,6 +107,20 @@ local function UpdateHealth(holder, unit, always)
     holder:Show()
 end
 
+-- Size, color and place a bar under the label (title, else name).
+local function Place(state, field, width, height, defW, defH, color)
+    local holder = Holder(state.overlay, field)
+    holder:SetSize(math.max(20, math.min(160, tonumber(width) or defW)),
+        math.max(1, math.min(8, tonumber(height) or defH)))
+    holder.bar:SetStatusBarColor(unpack(color))
+    local title = state.title
+    local below = title and title:IsShown() and (title:GetText() or "") ~= "" and title or state.name
+    holder:ClearAllPoints()
+    holder:SetPoint("TOP", below, "BOTTOM", 0, -3)
+    holder:SetAlpha(state.nameAlpha or 0)
+    return holder
+end
+
 -- Called for every rendered plate; cheap no-op when the option is off.
 function A.ApplyWounded(state)
     local overlay = state.overlay
@@ -116,15 +130,7 @@ function A.ApplyWounded(state)
         return
     end
     local db = A.db
-    local holder = Holder(overlay)
-    holder:SetSize(math.max(20, math.min(160, tonumber(db.woundedWidth) or 60)),
-        math.max(1, math.min(8, tonumber(db.woundedHeight) or 2)))
-    holder.bar:SetStatusBarColor(unpack(BarColor(state)))
-    local title = state.title
-    local below = title and title:IsShown() and (title:GetText() or "") ~= "" and title or state.name
-    holder:ClearAllPoints()
-    holder:SetPoint("TOP", below, "BOTTOM", 0, -3)
-    holder:SetAlpha(state.nameAlpha or 0)
+    local holder = Place(state, "wounded", db.woundedWidth, db.woundedHeight, 60, 2, BarColor(state))
     tracked[state.unit] = state
     UpdateHealth(holder, state.unit)
 end
@@ -157,15 +163,7 @@ function A.ApplyEnemyBar(state)
         return
     end
     local db = A.db
-    local holder = Holder(overlay, "enemyBar")
-    holder:SetSize(math.max(20, math.min(160, tonumber(db.enemyBarWidth) or 60)),
-        math.max(1, math.min(8, tonumber(db.enemyBarHeight) or 3)))
-    holder.bar:SetStatusBarColor(unpack(A.EnemyBarColor(state)))
-    local title = state.title
-    local below = title and title:IsShown() and (title:GetText() or "") ~= "" and title or state.name
-    holder:ClearAllPoints()
-    holder:SetPoint("TOP", below, "BOTTOM", 0, -3)
-    holder:SetAlpha(state.nameAlpha or 0)
+    local holder = Place(state, "enemyBar", db.enemyBarWidth, db.enemyBarHeight, 68, 3, A.EnemyBarColor(state))
     enemyTracked[state.unit] = state
     UpdateHealth(holder, state.unit, true)
 end
