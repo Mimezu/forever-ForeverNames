@@ -209,13 +209,8 @@ function A.LevelScope(enemy)
     local scope = enemy and A.db.enemyLevelScope or A.db.playerLevelScope
     return (scope == "near" or scope == "target") and scope or "all"
 end
-function A.LevelNear(unit, previous, enemy)
-    local db = A.db
-    local scope = A.LevelScope(enemy)
-    if scope == "all" then return true end
-    if Read(UnitIsUnit, unit, "target") == true then return true end
-    if scope == "target" then return false end
-    local range = enemy and db.enemyLevelRange or db.playerLevelRange
+-- Is the unit within range (15 = item probe, 4 or 3 = interact distance)?
+local function UnitNear(unit, range, previous)
     local ok, near
     if range == 15 then
         -- 15 yd: Linen Bandage's range, the usual item probe (not needed in bags).
@@ -234,6 +229,14 @@ function A.LevelNear(unit, previous, enemy)
     if ok and Public(near) and type(near) == "boolean" then return near end
     if previous == nil then return true end
     return previous
+end
+function A.LevelNear(unit, previous, enemy)
+    local db = A.db
+    local scope = A.LevelScope(enemy)
+    if scope == "all" then return true end
+    if Read(UnitIsUnit, unit, "target") == true then return true end
+    if scope == "target" then return false end
+    return UnitNear(unit, enemy and db.enemyLevelRange or db.playerLevelRange, previous)
 end
 -- Which levels need the distance check: friendly, enemy, or both.
 local function LevelChecks()
@@ -280,7 +283,7 @@ function A.UpdateEnemyDistance()
     local db = A.db
     enemyGeneration = enemyGeneration + 1
     if db.enabled and db.enemyEnabled and db.enemyScope == "near" then
-        if db.enemyRange == 15 and C_Item and C_Item.RequestLoadItemDataByID then pcall(C_Item.RequestLoadItemDataByID, 1251) end
+        if db.enemyRange == 15 and C_Item and C_Item.RequestLoadItemDataByID then pcall(C_Item.RequestLoadItemDataByID, RANGE_ITEM) end
         local run = enemyGeneration
         C_Timer.After(CHECK_INTERVAL, function() CheckEnemyDistances(run) end)
     end
@@ -389,17 +392,7 @@ function A.EnemyNear(unit, previous)
     if A.PlayerFlagged() or (db.enemyScope ~= "near" and db.enemyScope ~= "target") then return true end
     if Read(UnitIsUnit, unit, "target") == true then return true end
     if db.enemyScope == "target" then return false end
-    local ok, near
-    if db.enemyRange == 15 then
-        if not (C_Item and C_Item.IsItemInRange) then return true end
-        ok, near = pcall(C_Item.IsItemInRange, 1251, unit)
-    else
-        if not CheckInteractDistance then return true end
-        ok, near = pcall(CheckInteractDistance, unit, db.enemyRange == 4 and 4 or 3)
-    end
-    if ok and Public(near) and type(near) == "boolean" then return near end
-    if previous == nil then return true end
-    return previous
+    return UnitNear(unit, db.enemyRange, previous)
 end
 function A.FactionAtlas(unit)
     local faction = A.EnemyFaction(unit)
