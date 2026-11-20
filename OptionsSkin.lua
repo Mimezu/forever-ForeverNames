@@ -79,15 +79,6 @@ function S.Leather(frame, shade)
     return t
 end
 
-function S.Panel(frame)
-    if frame.SetBackdrop then frame:SetBackdrop(nil) end
-    local background=Leather(frame)
-    local rim=Plate(frame,"common-button-list-collapseExpand",true)
-    frame.legacyRim=rim
-    frame:HookScript("OnSizeChanged",function() rim:Update() end)
-    return background
-end
-
 function S.Button(button)
     -- Remove only template-owned textures; labels and preview colors survive.
     for _,key in ipairs({"Left","Middle","Right","LeftSeparator","RightSeparator"}) do
@@ -116,7 +107,8 @@ end
 
 -- Legacy window chrome: leather, native border, centered title, close, drag.
 function S.Frame(container,heading)
-    local background=S.Panel(container)
+    if container.SetBackdrop then container:SetBackdrop(nil) end
+    local background=Leather(container)
     local chrome=S.WindowBorder(container)
     -- Atlas corners include transparent padding. Keep leather inside the
     -- visible metal, rather than filling the padding with a black rectangle.
@@ -147,7 +139,6 @@ function S.Frame(container,heading)
 end
 
 function S.WindowBorder(frame)
-    if frame.legacyRim then frame.legacyRim:SetShown(false) end
     local border=CreateFrame("Frame",nil,frame)
     -- Compensate the native layout's external offsets, preserving its artwork.
     border:SetPoint("TOPLEFT",8,-16); border:SetPoint("BOTTOMRIGHT",-4,3)
