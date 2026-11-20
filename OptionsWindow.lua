@@ -129,14 +129,6 @@ local function SetScope(scopeKey, rangeKey, value)
 end
 local function Percent(value) return math.floor(value * 100 + 0.5) .. "%" end
 local function One(value) return string.format("%g", math.floor(value * 10 + 0.5) / 10) end
--- A custom color for a "Match name / Class / Custom" setting.
-local function PickCustom(colorKey, modeKey, anchor)
-    local db = A.db
-    local original, mode = {unpack(db.colors[colorKey])}, db[modeKey]
-    A.PickColor(anchor, original[1], original[2], original[3],
-        function(r, g, b) db.colors[colorKey] = {r, g, b}; A.SetOption(modeKey, "custom") end,
-        function() db.colors[colorKey] = original; A.SetOption(modeKey, mode) end)
-end
 
 -- Sample players for the live preview -------------------------------------------
 local CLASS_COLOR = {WARLOCK = {0.53, 0.53, 0.93}, WARRIOR = {0.78, 0.61, 0.43}, MAGE = {0.25, 0.78, 0.92},
@@ -432,7 +424,7 @@ local function LevelCard(col, enemy, enabledFn)
     local colorKey = enemy and "enemyLevelColorMode" or "playerLevelColorMode"
     local colors = enemy and "enemyLevel" or "playerLevel"
     card:Color("Color", function() return db[colorKey] end, function(v) A.SetOption(colorKey, v) end,
-        function(anchor) PickCustom(colors, colorKey, anchor) end, function() return db.colors[colors] end, {when = on})
+        function(anchor) A.PickModeColor(colors, colorKey, anchor) end, function() return db.colors[colors] end, {when = on})
     card:Seg("Side", {{"Before", "left"}, {"After", "right"}}, function() return db[p .. "LevelSide"] end,
         function(v) A.SetOption(p .. "LevelSide", v) end, {when = on})
     card:End()
@@ -582,7 +574,7 @@ local function BuildEnemies(kit, view, index, enabled)
         name:Seg("Not flagged: names for", names, function() return ScopeValue(db.enemyScope, db.enemyRange) end,
             function(value) SetScope("enemyScope", "enemyRange", value) end, {wide = true})
         name:Color("Color", function() return db.enemyColorMode end, function(v) A.SetOption("enemyColorMode", v) end,
-            function(anchor) PickCustom("enemyPlayer", "enemyColorMode", anchor) end, function() return db.colors.enemyPlayer end,
+            function(anchor) A.PickModeColor("enemyPlayer", "enemyColorMode", anchor) end, function() return db.colors.enemyPlayer end,
             {choices = {{"Blizzard", "blizzard"}, {"Class", "class"}, {"Faction", "faction"}, {"Custom", "custom"}}})
         NameSizeControls(name, "enemyPlayer", "Name size", "name")
         name:Seg("Mark", {{"None", "none"}, {"\194\171 Name \194\187", "guillemets"}, {"(Name)", "parens"}},

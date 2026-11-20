@@ -29,15 +29,6 @@ local function BarColor(state)
     end
     return A.db.colors.wounded
 end
-function A.PickWoundedColor(anchor)
-    local db = A.db
-    local mode = db.woundedColorMode or "custom"
-    local original = {unpack(db.colors.wounded)}
-    A.PickColor(anchor, original[1], original[2], original[3],
-        function(r, g, b) db.colors.wounded = {r, g, b}; db.woundedColorMode = "custom"; A.Refresh() end,
-        function() db.colors.wounded, db.woundedColorMode = original, mode; A.Refresh() end,
-        {current = mode, set = function(value) db.woundedColorMode = value; A.Refresh() end})
-end
 
 local curve
 local function Curve()
@@ -150,15 +141,6 @@ function A.EnemyBarColor(state)
     if mode == "custom" then return db.colors.enemyBar end
     if mode == "name" and state.color then return state.color end
     return A.UnitClassColor and A.UnitClassColor(state.unit) or state.color or {1, 1, 1}
-end
-function A.PickEnemyBarColor(anchor)
-    local db = A.db
-    local mode = db.enemyBarColorMode or "class"
-    local original = {unpack(db.colors.enemyBar)}
-    A.PickColor(anchor, original[1], original[2], original[3],
-        function(r, g, b) db.colors.enemyBar = {r, g, b}; db.enemyBarColorMode = "custom"; A.Refresh() end,
-        function() db.colors.enemyBar, db.enemyBarColorMode = original, mode; A.Refresh() end,
-        {current = mode, set = function(value) db.enemyBarColorMode = value; A.Refresh() end})
 end
 local enemyTracked = {}
 function A.EnemyBarEnabled()

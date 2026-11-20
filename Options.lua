@@ -80,13 +80,19 @@ function A.PickRoleColor(key, anchor)
         function(r, g, b) db.colors[key] = {r, g, b}; A.Refresh() end,
         function() db.colors[key] = original; A.Refresh() end)
 end
-function A.PickPlayerColor(anchor)
+-- A custom color for a "Match name / Class / Custom" setting; withModes adds
+-- the mode choices to the popover.
+function A.PickModeColor(colorKey, modeKey, anchor, withModes, defaultMode)
     local db = A.db
-    local original, mode = {unpack(db.colors.friendlyPlayer)}, db.playerColorMode
+    local original, mode = {unpack(db.colors[colorKey])}, db[modeKey] or defaultMode
     A.PickColor(anchor, original[1], original[2], original[3],
-        function(r, g, b) db.colors.friendlyPlayer = {r, g, b}; db.playerColorMode = "custom"; A.Refresh() end,
-        function() db.colors.friendlyPlayer, db.playerColorMode = original, mode; A.Refresh() end)
+        function(r, g, b) db.colors[colorKey] = {r, g, b}; A.SetOption(modeKey, "custom") end,
+        function() db.colors[colorKey] = original; A.SetOption(modeKey, mode) end,
+        withModes and {current = mode, set = function(value) A.SetOption(modeKey, value) end} or nil)
 end
+function A.PickPlayerColor(anchor) A.PickModeColor("friendlyPlayer", "playerColorMode", anchor, nil, "custom") end
+function A.PickWoundedColor(anchor) A.PickModeColor("wounded", "woundedColorMode", anchor, true, "custom") end
+function A.PickEnemyBarColor(anchor) A.PickModeColor("enemyBar", "enemyBarColorMode", anchor, true, "class") end
 function A.PickTargetHealthColor(anchor)
     local db = A.db
     local r, g, b, matched, mode = db.targetHealthR, db.targetHealthG, db.targetHealthB, db.targetHealthNameColor, db.targetHealthColorMode
