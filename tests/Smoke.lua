@@ -244,6 +244,12 @@ CompanionJournalDB={peopleRename=false,peopleIcons=false,peopleTooltip=false,peo
 emit('ADDON_LOADED','ForeverNames');cjEvents.scripts.OnEvent(cjEvents,'ADDON_LOADED','CompanionJournal')
 emit('PLAYER_LOGIN');cjEvents.scripts.OnEvent(cjEvents,'PLAYER_LOGIN');settle()
 check(CompanionJournalAPI and ForeverNamesAPI,'both addons publish their API')
+-- The settings window is built on first open, not at login.
+equal(A.options,nil,'login builds no settings window')
+check(not ForeverNamesAPI.IsOpen(),'nothing open before first use')
+ForeverNames_ToggleWindow()
+check(A.options and A.options.shown,'the window key builds and opens the window')
+A.options:Hide()
 SlashCmdList.FOREVERNAMES('vitals off')
 equal(A.db.targetOnlyVitals,false,'vitals off disables the saved preference')
 equal(A.GetVitalsStatus().mode,'OFF','off command reports off even without native API')
@@ -1925,7 +1931,7 @@ do
  SlashCmdList.FOREVERNAMES('people')
  print=realPrint
  check(said and said:find('Companion Journal, which is not installed',1,true),'/fnames people says where People went')
- -- The settings are built at login, knowing whether Companion Journal is there:
+ -- The settings are built on first open, knowing whether Companion Journal is there:
  -- without it, the window shows nothing of it (no People tab, links, notes or Rivals).
  local mentions,realSetText={},M.SetText
  M.SetText=function(self,v) if type(v)=='string' and v~='Companion Journal' and v:find('Companion Journal',1,true) then mentions[#mentions+1]=v end;return realSetText(self,v) end

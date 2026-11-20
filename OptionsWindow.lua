@@ -1111,11 +1111,16 @@ local function BuildWindow()
         Where = function() return pageIndex, pages[pageIndex].viewIndex end}
 end
 
+-- The window is built on first open (A.CreateOptions forces a rebuild).
+local function Ensure()
+    if not active then A.CreateOptions() end
+    return active
+end
 function A.RefreshOptions() if active then active.Refresh() end end
-function A.SelectOptionsPage(index) if active then active.Select(index) end end
-function A.OpenOptions() if active then active.Open() end end
+function A.SelectOptionsPage(index) Ensure().Select(index) end
+function A.OpenOptions() Ensure().Open() end
 function A.ToggleOptions()
-    if not active then return end
+    Ensure()
     if active.frame:IsShown() then active.frame:Hide() else active.Open() end
 end
 function A.CreateOptions()

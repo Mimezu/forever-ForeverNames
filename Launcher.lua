@@ -149,7 +149,7 @@ local function RegisterPage()
     function A.RefreshSettingsPage() if page:IsShown() then refresh() end end
 end
 
--- Called at login, after the settings window exists (Core.lua).
+-- Called at login (Core.lua); the settings window is built on first open.
 function A.CreateLauncher()
     A.RefreshMinimapButton()
     pcall(RegisterPage)

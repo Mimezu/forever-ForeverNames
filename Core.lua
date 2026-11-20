@@ -592,7 +592,6 @@ events:SetScript("OnEvent", function(_, event, arg)
                 if IsWorldPlateToken(unit) then TrackPlate(unit, true) end
             end
         end
-        A.CreateOptions()
         if A.CreateLauncher then A.CreateLauncher() end -- minimap button, Blizzard Settings page
         -- Companion Journal (installed): changes to your people redraw our labels.
         local people = A.People and A.People()
