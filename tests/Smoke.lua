@@ -1812,6 +1812,9 @@ do
   check(not healthDriver.events.UNIT_LEVEL,'health bar off stops level updates')
   healthToggle.checked=true;healthToggle.scripts.OnClick(healthToggle)
   equal(pill.shown,true,'health bar back on restores enabled level')
+  A.ResetTargetHealth()
+  equal(A.db.targetHealthLevel,true,'Reset bar keeps "Show their level"')
+  equal(pill.shown,true,'and the level pill stays')
   -- The client normally has this atlas; verify the older-client fallback too.
   local atlasInfo=C_Texture.GetAtlasInfo
   C_Texture.GetAtlasInfo=function(name) if name~='ui-hud-nameplates-levelindicator' then return atlasInfo(name) end end
