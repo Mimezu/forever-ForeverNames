@@ -1844,6 +1844,28 @@ do
  A.SetOption('playerLevelScope','all');A.SetOption('playerShowLevel',false)
  UnitLevel=realLevel
 end
+-- "Show their level" and the health bar re-render the selected player's plate.
+do
+ local realLevel=UnitLevel;UnitLevel=function(u) return units[u] and units[u].level end
+ local barBefore,levelBefore=A.db.targetHealthBar,A.db.targetHealthLevel
+ A.SetOption('targetHealthBar',true);A.SetOption('targetHealthLevel',false)
+ A.SetOption('playerShowLevel',true);settle()
+ local _,sf=spawn('nameplate340',{id='340',name='Selected',player=true,level=37})
+ units.target=units.nameplate340;emit('PLAYER_TARGET_CHANGED');settle()
+ equal(state(sf).overlay.level.text,'37','pill off: the target keeps its inline level')
+ A.SetOption('targetHealthLevel',true);settle()
+ equal(state(sf).overlay.level.text or '','','pill on: the target drops its inline level at once')
+ A.SetOption('targetHealthLevel',false);settle()
+ equal(state(sf).overlay.level.text,'37','pill off again: the inline level returns at once')
+ A.SetOption('targetHealthLevel',true);settle()
+ A.SetOption('targetHealthBar',false);settle()
+ equal(state(sf).overlay.level.text,'37','bar off: the inline level returns at once')
+ units.target=nil;emit('PLAYER_TARGET_CHANGED')
+ emit('NAME_PLATE_UNIT_REMOVED','nameplate340');units.nameplate340=nil;plates.nameplate340=nil
+ A.SetOption('targetHealthBar',barBefore);A.SetOption('targetHealthLevel',levelBefore)
+ A.SetOption('playerShowLevel',false);settle()
+ UnitLevel=realLevel
+end
 -- Settings window: by who a setting is about.
 do
  A.options:Hide()

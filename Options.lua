@@ -13,6 +13,7 @@ function A.SetOption(key, value)
     if key == "enemyLevelColorMode" then db.enemyLevelClassColor = value == "class" end
     if key:match("^targetHealth") then
         if key == "targetHealthBar" then A.ApplyCVars() end
+        if (key == "targetHealthBar" or key == "targetHealthLevel") and A.RequeueTarget then A.RequeueTarget() end
         A.RefreshTargetHealthAppearance(); A.RefreshOptions(); return
     end
     if (key == "playerShowLevel" or key == "enabled" or key:match("^wounded") or key:match("^playerLevel")) and A.UpdatePlayerEvents then A.UpdatePlayerEvents() end

@@ -426,6 +426,17 @@ function A.RequeuePlayers()
         if Read(UnitIsPlayer, unit) == true then QueueUnit(unit, true) end
     end
 end
+-- The tracked plate that is your target, if any.
+local function TargetUnit()
+    for unit in pairs(active) do
+        if Read(UnitIsUnit, unit, "target") == true then return unit end
+    end
+end
+-- The target's own plate reads the health bar settings (level pill, wounded bar).
+function A.RequeueTarget()
+    local unit = TargetUnit()
+    if unit and Read(UnitIsPlayer, unit) == true then QueueUnit(unit, true) end
+end
 -- Quest progress (every quest kill) changes only NPC quest markers. Coalesce a
 -- burst into one pass, and leave friendly-player plates alone.
 local questRefreshQueued = false
@@ -634,10 +645,7 @@ events:SetScript("OnEvent", function(_, event, arg)
             or (db.enemyEnabled and db.enemyShowLevel and A.LevelScope and A.LevelScope(true) ~= "all")
             or (db.enemyEnabled and (db.enemyScope == "target" or db.enemyScope == "near"))) then
             -- Only the plate you left and the one you selected can change.
-            local current
-            for unit in pairs(active) do
-                if Read(UnitIsUnit, unit, "target") == true then current = unit; break end
-            end
+            local current = TargetUnit()
             for _, unit in ipairs({lastTargetUnit or "", current or ""}) do
                 if active[unit] and Read(UnitIsPlayer, unit) == true then QueueUnit(unit, true) end
             end
