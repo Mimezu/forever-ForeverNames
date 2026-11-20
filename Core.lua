@@ -413,10 +413,6 @@ end
 local function ScheduleAll()
     for unit in pairs(active) do QueueUnit(unit, true) end
 end
--- Units with a tracked world nameplate (for short, bounded scans).
-function A.EachTrackedUnit(callback)
-    for unit in pairs(active) do callback(unit) end
-end
 -- Relationship changes (roster, friend lists) affect only player plates.
 function A.RequeueUnit(unit)
     if active[unit] then QueueUnit(unit, true) end

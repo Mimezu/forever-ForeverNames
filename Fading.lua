@@ -108,13 +108,6 @@ local function MigrateCharacter(state)
         end
     end
 end
-A.FadeCharacterState = CharacterState
-function A.IsFadeCVar(name)
-    for _, setting in ipairs(A.fadeControls) do
-        if setting.key:lower() == name:lower() then return true end
-    end
-    return false
-end
 function A.ApplyFadeCVars()
     local db = A.db
     if not db or not db.fadeValues then return end

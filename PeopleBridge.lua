@@ -11,11 +11,6 @@ function A.People()
     if type(api) == "table" and type(api.version) == "number" and api.version >= 1 then return api end
     return nil
 end
--- Any in-world People feature on (display names, icons, tooltip, last seen).
-function A.PeopleActive()
-    local people = A.People()
-    return people ~= nil and people.Active() == true
-end
 -- A person's icon: texture path, color, color mode ("custom", "class" or
 -- "name"), own size (nil = ours), own side ("left", "right" or nil).
 function A.PersonIcon(person)

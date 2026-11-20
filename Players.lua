@@ -149,7 +149,6 @@ local badgeStyles = {
     default = {fill = {0.03, 0.03, 0.03, 0.95}, border = {0.12, 0.12, 0.12}},
     classic = {fill = {0.03, 0.03, 0.03, 0.95}, border = {0.65, 0.5, 0.26}, native = true},
 }
-A.levelBadgeStyles = badgeStyles
 local MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 local function Badge(owner)
     if owner.levelBadge then return owner.levelBadge end

@@ -28,7 +28,6 @@ local TRADES = {
     [755] = {"trade_gem", {0.45, 1.00, 1.00}, "jewelcrafting", {"jewelcrafter"}},
     [773] = {"trade_quill", {1.00, 0.94, 0.75}, "inscription", {"scribe"}},
 }
-A.trainerTrades = TRADES
 local RANKS = {"apprentice", "journeyman", "expert", "artisan", "master", "grand master"}
 local CLASS_GLYPH = "trade_book"
 

@@ -109,17 +109,6 @@ function A.ModernKit(kit)
     end
 
     -- Free-standing controls (window header and footer) -----------------------------
-    function kit.Choice(parent, choices, get, set)
-        local widths, total = CellWidths(choices)
-        local group = Group(parent, total)
-        group.cells = {}
-        for i, choice in ipairs(choices) do group.cells[i] = Cell(group, choice[1], widths[i], function() set(choice[2]) end) end
-        On(function()
-            local current = get()
-            for i, choice in ipairs(choices) do Paint(group.cells[i], choice[2] == current) end
-        end)
-        return group
-    end
     -- Text tabs: the selected one is gold, on a gold underline.
     function kit.Tabs(parent, x, y, labels, get, set)
         local tabs = {}

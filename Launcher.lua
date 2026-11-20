@@ -145,7 +145,7 @@ local function RegisterPage()
     if not (ok and category) then return end
     pcall(Settings.RegisterAddOnCategory, category)
     page = panel
-    A.settingsPage, A.settingsCategory = panel, category
+    A.settingsPage = panel
     function A.RefreshSettingsPage() if page:IsShown() then refresh() end end
 end
 

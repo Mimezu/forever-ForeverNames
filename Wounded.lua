@@ -53,7 +53,6 @@ local function Curve()
     end
     return curve
 end
-function A.WoundedAvailable() return Curve() ~= nil and UnitHealthPercent ~= nil end
 function A.WoundedEnabled()
     local db = A.db
     return db.enabled and (db.woundedPlayers or db.woundedParty) and true or false
@@ -90,7 +89,6 @@ local function Holder(overlay, field)
     overlay[field] = holder
     return holder
 end
-A.WoundedHolder = Holder -- also used by the settings preview
 
 -- always = true: shown at any health (enemy bar), no curve.
 local function UpdateHealth(holder, unit, always)

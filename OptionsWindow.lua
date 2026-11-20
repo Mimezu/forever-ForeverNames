@@ -1107,8 +1107,7 @@ local function BuildWindow()
         if frame:IsShown() then Refresh() else frame:Show() end
     end
     Select(tonumber(db.optionsPage) or 1)
-    return {frame = frame, pages = pages, tabs = tabs, close = close, Select = Select, Refresh = Refresh, Open = Open,
-        Where = function() return pageIndex, pages[pageIndex].viewIndex end}
+    return {frame = frame, pages = pages, tabs = tabs, close = close, Select = Select, Refresh = Refresh, Open = Open}
 end
 
 -- The window is built on first open (A.CreateOptions forces a rebuild).
@@ -1125,5 +1124,5 @@ function A.ToggleOptions()
 end
 function A.CreateOptions()
     active = BuildWindow()
-    A.options, A.optionsPages, A.optionsTabs, A.optionsCloseButton = active.frame, active.pages, active.tabs, active.close
+    A.options, A.optionsPages, A.optionsCloseButton = active.frame, active.pages, active.close
 end

@@ -18,7 +18,6 @@ local HIDE = {
     "UnitNameFriendlyPetName", "UnitNameFriendlyGuardianName", "UnitNameFriendlyMinionName", "UnitNameFriendlyTotemName",
     "UnitNameEnemyPetName", "UnitNameEnemyGuardianName", "UnitNameEnemyMinionName", "UnitNameEnemyTotemName",
 }
-A.hideAllCVars = HIDE
 
 local function Character()
     local ok, guid = pcall(UnitGUID, "player")
