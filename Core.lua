@@ -7,6 +7,7 @@ A.defaults = {
     hideNativePlayerNames = true,
     nativeSmoothScaling = true,
     targetOnlyVitals = false,
+    hideWhileFishing = true,   -- a fishing pole in hand: everything hidden (HideAll.lua)
     showFriendlyPlayers = true,
     targetHealthBar = false, targetHealthStyle = "minimal",
     targetHealthLevel = false,

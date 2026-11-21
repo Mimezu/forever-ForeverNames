@@ -68,14 +68,58 @@ waiter:SetScript("OnEvent", function(self)
 end)
 
 -- Key "Hide or show all names and nameplates", /fnames hide, and the settings button.
-function A.ToggleLabels(hidden)
+-- byFishing: the fishing pole's own hide (below); any other call is yours, and
+-- fishing then leaves it alone.
+function A.ToggleLabels(hidden, byFishing)
     if not A.db then return end
+    if not byFishing then A.fishingHid = nil end
     if hidden == nil then hidden = not A.allHidden end
     A.allHidden = hidden and true or nil
     A.FadeLabels(A.allHidden)
     Apply() -- silent; in combat Blizzard's plates follow when combat ends
     if A.RefreshOptions then A.RefreshOptions() end
 end
+
+-- Fishing: a pole in hand hides everything; something else equipped, or a fight
+-- beginning, puts back what you had (in the last moment before combat, when the
+-- game still takes nameplate settings, so you fight with your plates). After the
+-- fight, the pole still in hand: hidden again. Hidden by you first: left alone.
+-- (pure) "hide", "show" or nil
+function A.FishingStep(enabled, pole, combat, allHidden, fishingHid)
+    if enabled and pole and not combat then
+        if not allHidden then return "hide" end
+    elseif fishingHid and allHidden then
+        return "show"
+    end
+end
+
+local POLE_CLASS, POLE_SUBCLASS = 2, 20   -- Weapon, Fishing Pole
+local function PoleInHand()
+    local ok, id = pcall(GetInventoryItemID, "player", 16)
+    if not ok or not id then return false end
+    local info = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+    local ok2, _, _, _, _, _, classID, subclassID = pcall(info, id)
+    return ok2 and classID == POLE_CLASS and subclassID == POLE_SUBCLASS
+end
+
+local fishing = CreateFrame("Frame")
+for _, event in ipairs({"PLAYER_ENTERING_WORLD", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED"}) do
+    fishing:RegisterEvent(event)
+end
+fishing:SetScript("OnEvent", function(_, event, slot)
+    if not A.db then return end
+    if event == "PLAYER_EQUIPMENT_CHANGED" and slot ~= 16 then return end
+    -- (the fight's first moment: not locked yet, so the plates can still come back)
+    local combat = event == "PLAYER_REGEN_DISABLED" or (event ~= "PLAYER_REGEN_ENABLED" and InCombatLockdown())
+    local step = A.FishingStep(A.db.hideWhileFishing ~= false, PoleInHand(), combat, A.allHidden, A.fishingHid)
+    if step == "hide" then
+        A.ToggleLabels(true, true)
+        A.fishingHid = true
+    elseif step == "show" then
+        A.fishingHid = nil
+        A.ToggleLabels(false, true)
+    end
+end)
 
 -- Login: anything still stored away from last time comes back.
 function A.RestoreHiddenNames()

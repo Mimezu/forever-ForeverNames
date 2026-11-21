@@ -904,6 +904,8 @@ local function BuildAll(kit, view, index)
         end
         keys:Button("", function() A.ToggleLabels() end,
             {width = 200, label = function() return A.allHidden and "Bring everything back" or "Hide everything now" end})
+        keys:Check("Hide while fishing", function() return db.hideWhileFishing ~= false end,
+            function(v) A.SetOption("hideWhileFishing", v) end, {tip = "Back in a fight"})
         keys:End()
     end
 end
