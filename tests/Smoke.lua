@@ -215,7 +215,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','Trainers.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua','Launcher.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','Trainers.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','VendorMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua','Launcher.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}
@@ -2059,6 +2059,94 @@ do
  emit('NAME_PLATE_UNIT_REMOVED','nameplate160');emit('NAME_PLATE_UNIT_REMOVED','nameplate161')
  units.nameplate160,units.nameplate161,plates.nameplate160,plates.nameplate161=nil,nil,nil,nil
  C_QuestLog=nil
+ settle()
+end
+-- Vendor coins: a coin in the icon row of merchants Ten Minute Goblin marks (on by default).
+do
+ local COIN='Interface\\MoneyFrame\\UI-GoldIcon'
+ local function coin(frame)
+  local st=state(frame);local pool=st and st.overlay.icons
+  if not pool then return nil end
+  for _,t in ipairs(pool) do if t.shown and t.path==COIN then return t end end
+ end
+ equal(A.defaults.vendorCoins,true,'vendor coins on by default')
+ equal(A.db.vendorCoins,true,'the default reached the settings')
+ -- the gain text
+ equal(A.VendorGainText(21000),'+2g 10s','gold and silver')
+ equal(A.VendorGainText(30240),'+3g 2s','copper dropped above a gold')
+ equal(A.VendorGainText(40000),'+4g','whole gold alone')
+ equal(A.VendorGainText(4775),'+47s 75c','silver and copper')
+ equal(A.VendorGainText(99),'+99c','copper alone')
+ equal(A.VendorGainText(0),nil,'nothing to gain: no text')
+ equal(A.VendorGainText(nil),nil,'no gain: no text')
+ -- without Ten Minute Goblin: nothing read, nothing drawn
+ equal(TenMinuteGoblin,nil,'Ten Minute Goblin absent at first')
+ local _,grocer=spawn('nameplate401',{id='1701',name='Grocer',cursor='Buy',title='General Goods'})
+ local _,guard=spawn('nameplate402',{id='1711',name='Guard',cursor='Speak'})
+ settle()
+ check(state(grocer) and state(grocer).visible,'the merchant is labeled')
+ equal(coin(grocer),nil,'no Goblin: no coin')
+ equal(A.VendorMark('1701'),nil,'no Goblin: no mark')
+ -- Ten Minute Goblin arrives (loaded after us)
+ local marks,calls,callback,asked={[1701]={gain=21000,items=2,why='Buy at vendor'}},0,nil,nil
+ TenMinuteGoblin={VendorMark=function(id) calls=calls+1;if id==1701 then asked=id end;return marks[id] end,OnMarksChanged=function(fn) callback=fn end}
+ local tooltipPostCalls={}
+ TooltipDataProcessor={AddTooltipPostCall=function(kind,fn) tooltipPostCalls[#tooltipPostCalls+1]={kind=kind,fn=fn} end}
+ Enum.TooltipDataType={Unit=2}
+ -- The game tells every listening frame about the new addon.
+ for _,f in ipairs(frames) do if f.events.ADDON_LOADED and f.scripts.OnEvent then f.scripts.OnEvent(f,'ADDON_LOADED','TenMinuteGoblin') end end
+ settle()
+ check(callback~=nil,'Forever Names listens for mark changes')
+ local texture=coin(grocer)
+ check(texture~=nil,'the marked merchant gets the coin')
+ equal(asked,1701,'the NPC id is asked for as a number')
+ equal(texture.anchor[2],state(grocer).name,'the coin sits beside the name')
+ equal(coin(guard),nil,'an unmarked NPC gets none')
+ local settled=calls
+ settle()
+ equal(calls,settled,'a settled scene asks nothing more')
+ -- marks change: the coin follows
+ marks[1701]=nil;callback();settle()
+ equal(coin(grocer),nil,'mark withdrawn: coin gone')
+ marks[1701]={gain=500,items=1,why='Buy at vendor'};callback();settle()
+ check(coin(grocer)~=nil,'mark back: coin back')
+ -- the tooltip line
+ local unitCall
+ for _,c in ipairs(tooltipPostCalls) do if c.kind==2 then unitCall=c.fn end end
+ check(unitCall~=nil,'one unit tooltip post-call')
+ local tip={lines={}}
+ function tip:GetUnit() return 'Grocer','nameplate401' end
+ function tip:AddLine(text) self.lines[#self.lines+1]=text end
+ unitCall(tip)
+ equal(tip.lines[1],'Resell +5s','the merchant tooltip names the gain')
+ function tip:GetUnit() return 'Guard','nameplate402' end
+ unitCall(tip)
+ equal(#tip.lines,1,'an unmarked NPC gets no line')
+ -- the option
+ A.SetOption('vendorCoins',false);settle()
+ equal(coin(grocer),nil,'option off: coin gone')
+ settled=calls
+ callback();settle()
+ equal(calls,settled,'option off: marks never asked for')
+ tip.lines={};function tip:GetUnit() return 'Grocer','nameplate401' end;unitCall(tip)
+ equal(#tip.lines,0,'option off: no tooltip line')
+ A.SetOption('vendorCoins',true);settle()
+ check(coin(grocer)~=nil,'option on: coin back')
+ -- beside a trainer icon, never over it
+ A.SetOption('iconsProfessionTrainer',true);settle()
+ marks[1721]={gain=1000,items=1,why='Buy at vendor'}
+ local _,smith=spawn('nameplate403',{id='1721',name='Smith',cursor='Trainer',title='Expert Blacksmith'})
+ settle()
+ local pool=state(smith).overlay.icons
+ check(pool[1].shown and pool[2].shown,'trainer icon and coin both shown')
+ check((pool[1].path==A.GlyphPath('trade_anvil') and pool[2].path==COIN),'anvil first, then the coin')
+ equal(pool[2].anchor[2],pool[1],'the coin is anchored after the anvil')
+ A.SetOption('iconsProfessionTrainer',false);settle()
+ check(pool[1].shown and pool[1].path==COIN,'trainer icon off: the coin stays, first in the row')
+ equal(pool[2].shown,false,'and the second slot is empty')
+ emit('NAME_PLATE_UNIT_REMOVED','nameplate401');emit('NAME_PLATE_UNIT_REMOVED','nameplate402');emit('NAME_PLATE_UNIT_REMOVED','nameplate403')
+ units.nameplate401,units.nameplate402,units.nameplate403,plates.nameplate401,plates.nameplate402,plates.nameplate403=nil,nil,nil,nil,nil,nil
+ TenMinuteGoblin,TooltipDataProcessor=nil,nil
  settle()
 end
 -- Hide everything: every name and nameplate, then exactly what you had.

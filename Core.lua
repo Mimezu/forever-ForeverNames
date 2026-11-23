@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version = "1.21.5"
+A.version = "1.23.0"
 A.defaults = {
     enabled = true,
     hideNativeNames = true, includeOppositeFaction = true, useOppositeFactionColor = true,
@@ -307,6 +307,8 @@ local function UpdatePlate(unit)
     if role then title, titleComplete = CachedTitle(unit) end
     -- Trainers of your professions and class (Trainers.lua).
     if A.TrainerIcons then npcIcons = A.TrainerIcons(title, npcIcons, active[unit], unit) end
+    -- A coin on merchants worth a resale visit (VendorMarks.lua, Ten Minute Goblin).
+    if A.VendorIcons then npcIcons = A.VendorIcons(id, npcIcons, active[unit]) end
     local rendered = A.RenderPlate(plate, frame, unit, role or (person and "person") or nil, color, title, colorKey, nil, nil, npcIcons)
     if rendered == false then return true end -- unsupported layout: do not mutate it
     if not rendered then return nil end
@@ -436,15 +438,18 @@ function A.RequeueTarget()
 end
 -- Quest progress (every quest kill) changes only NPC quest markers. Coalesce a
 -- burst into one pass, and leave friendly-player plates alone.
+function A.RequeueNPCs()
+    for unit in pairs(active) do
+        if Read(UnitIsPlayer, unit) ~= true then QueueUnit(unit, true) end
+    end
+end
 local questRefreshQueued = false
 local function ScheduleQuestRefresh()
     if questRefreshQueued then return end
     questRefreshQueued = true
     C_Timer.After(0.5, function()
         questRefreshQueued = false
-        for unit in pairs(active) do
-            if Read(UnitIsPlayer, unit) ~= true then QueueUnit(unit, true) end
-        end
+        A.RequeueNPCs()
     end)
 end
 local RefreshOpacity

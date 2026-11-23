@@ -5,6 +5,14 @@ players in the open world. Every feature added since 1.7.0 has its own toggle.
 Since 1.18.0 a fresh install starts with the author's own setup (below);
 turn features off to get back to the plain 1.6.1 look.
 
+## 1.23.0 Vendor coins
+
+- A small gold coin beside a merchant whose shop holds items worth
+  reselling on the auction house, only while it is worth it. Ten Minute
+  Goblin decides; without it nothing shows. Option **Vendor coins**
+  (NPCs > Which NPCs, card "Marks"; on). The coin sits in the icon row,
+  beside a trainer icon. The merchant's tooltip adds "Resell +2g 10s".
+
 ## 1.21.5 Tidy-up
 
 - Ticking "Show their level" or the health bar updates the selected

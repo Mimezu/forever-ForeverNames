@@ -2,11 +2,11 @@
 ## Title: Forever Names
 ## Notes: Custom friendly player names and NPC names with real subtitles and role colors.
 ## Author: Mimezu
-## Version: 1.22.0
+## Version: 1.23.0
 ## SavedVariables: ForeverNamesDB
 ## LoadSavedVariablesFirst: 1
 # Settings load through native SavedVariables.
-## OptionalDeps: Blizzard_NamePlates
+## OptionalDeps: Blizzard_NamePlates, TenMinuteGoblin
 ## Category: Mimezu's Suite
 ## IconTexture: Interface\Icons\INV_Misc_Note_02
 
@@ -21,6 +21,7 @@ Trainers.lua
 PeopleBridge.lua
 Wounded.lua
 QuestMarks.lua
+VendorMarks.lua
 HideAll.lua
 OptionsSkin.lua
 OptionsModern.lua

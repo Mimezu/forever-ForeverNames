@@ -710,10 +710,12 @@ local function BuildNPCs(kit, view, index)
     names:Check("Label opposite-faction service NPCs", function() return db.includeOppositeFaction end, function(v) A.SetOption("includeOppositeFaction", v) end,
         {more = servicesNote})
     names:End()
-    local quests = left:Card("Quest enemies")
+    local quests = left:Card("Marks")
     local questNote = "A yellow ! left of hostile and neutral enemies you need for an active quest: ones to kill, or ones that drop quest items. It goes away when the objective is done."
     quests:Check("Show ! beside enemies for your quests", function() return db.questMark end, function(v) A.SetOption("questMark", v) end,
         {more = questNote})
+    quests:Check("Vendor coins", function() return db.vendorCoins end, function(v) A.SetOption("vendorCoins", v) end,
+        {tip = "Needs Ten Minute Goblin"})
     quests:End()
     local trainers = left:Card("Trainers")
     trainers:Check("Profession trainer icon", function() return db.iconsProfessionTrainer end,
