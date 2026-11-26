@@ -431,3 +431,36 @@ function A.RenderPlate(plate, frame, unit, role, color, title, sizeKey, level, l
     HookFrame(frame)
     return true
 end
+
+-- /fnames plate: what draws the target's name. Every label of ours showing
+-- that text (two = a stale copy), the native name's alpha, our text's shadow.
+function A.DebugPlate(unit)
+    local function Num(v) return type(v) == "number" and string.format("%.2f", v) or tostring(v) end
+    local ok, name = pcall(UnitName, unit)
+    if not ok or type(name) ~= "string" or (issecretvalue and issecretvalue(name)) then
+        print("Forever Names: target an NPC or player first"); return
+    end
+    local okPlate, plate = pcall(C_NamePlate.GetNamePlateForUnit, unit)
+    plate = okPlate and plate or nil
+    local copies = 0
+    for p, overlay in pairs(overlays) do
+        local text = overlay.name and overlay.name:GetText() or ""
+        if overlay:IsVisible() and text ~= "" and text:find(name, 1, true) then
+            copies = copies + 1
+            local x, y = overlay.name:GetCenter()
+            local state = overlay.owner and states[overlay.owner]
+            print("Forever Names: label", copies, p == plate and "(target's plate)" or "(other plate)",
+                "unit:", tostring(state and state.unit), "at:", Num(x), Num(y), "alpha:", Num(overlay.name:GetEffectiveAlpha()))
+        end
+    end
+    local frame = plate and not (plate.IsForbidden and plate:IsForbidden()) and plate.UnitFrame
+    local native = frame and frame.name
+    local ours = plate and overlays[plate] and overlays[plate].name
+    local sx, sy, sa
+    if ours then sx, sy = ours:GetShadowOffset(); sa = select(4, ours:GetShadowColor()) end
+    local _, _, flags = ours and ours:GetFont()
+    print("Forever Names:", name, "labels shown:", copies,
+        "native name alpha:", native and Num(native:GetAlpha()) or "none", native and tostring(native:IsShown()) or "",
+        "shadow:", Num(sx), Num(sy), "a", Num(sa), "outline:", tostring(flags),
+        "UnitNameNPC:", tostring(GetCVar("UnitNameNPC")), "UnitNameFriendlySpecialNPCName:", tostring(GetCVar("UnitNameFriendlySpecialNPCName")))
+end
