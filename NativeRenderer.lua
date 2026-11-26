@@ -456,9 +456,8 @@ function A.DebugPlate(unit)
     local frame = plate and not (plate.IsForbidden and plate:IsForbidden()) and plate.UnitFrame
     local native = frame and frame.name
     local ours = plate and overlays[plate] and overlays[plate].name
-    local sx, sy, sa
-    if ours then sx, sy = ours:GetShadowOffset(); sa = select(4, ours:GetShadowColor()) end
-    local _, _, flags = ours and ours:GetFont()
+    local sx, sy, sa, flags
+    if ours then sx, sy = ours:GetShadowOffset(); sa = select(4, ours:GetShadowColor()); flags = select(3, ours:GetFont()) end
     print("Forever Names:", name, "labels shown:", copies,
         "native name alpha:", native and Num(native:GetAlpha()) or "none", native and tostring(native:IsShown()) or "",
         "shadow:", Num(sx), Num(sy), "a", Num(sa), "outline:", tostring(flags),
