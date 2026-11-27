@@ -723,6 +723,14 @@ local function BuildNPCs(kit, view, index)
     trainers:Check("Class trainer icon", function() return db.iconsClassTrainer end,
         function(v) A.SetOption("iconsClassTrainer", v) end, {tip = "Only your class"})
     trainers:End()
+    local threat = right:Card("Threat")
+    local threatOn = function() return db.threat end
+    threat:Check("Threat on enemy plates", threatOn, function(v) A.SetOption("threat", v) end, {tip = "In a group"})
+    threat:Check("Lead line", function() return db.threatLine end, function(v) A.SetOption("threatLine", v) end, {indent = true, when = threatOn})
+    threat:Check("Glow when loose", function() return db.threatGlow end, function(v) A.SetOption("threatGlow", v) end, {indent = true, when = threatOn})
+    threat:Check("Who it hits", function() return db.threatWho end, function(v) A.SetOption("threatWho", v) end, {indent = true, when = threatOn})
+    threat:Check("Solo too", function() return db.threatSolo end, function(v) A.SetOption("threatSolo", v) end, {indent = true, when = threatOn})
+    threat:End()
     local fix = right:Card("Mislabeled NPC?")
     fix:Note("Target the NPC, then pick how it should be labeled. Auto returns it to automatic detection.")
     for i, entry in ipairs({{"Vendor", "vendor"}, {"Quest giver", "quest"}, {"Service", "interactive"}, {"Hide", "hidenpc"}, {"Auto", "auto"}}) do

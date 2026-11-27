@@ -215,7 +215,7 @@ C_Texture={GetAtlasInfo=function(name)
  leftTexCoord=.1,rightTexCoord=.9,topTexCoord=.2,bottomTexCoord=.8}
 end}
 NineSliceUtil={ApplyLayoutByName=function(frame,name) frame.layout=name;frame.TopEdge=object() end}
-for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','Trainers.lua','PeopleBridge.lua','Wounded.lua','QuestMarks.lua','VendorMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua','Launcher.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
+for _,file in ipairs({'Core.lua','Fading.lua','NativeRenderer.lua','NativeVitals.lua','TargetHealthBar.lua','Players.lua','Icons.lua','Trainers.lua','PeopleBridge.lua','Wounded.lua','Threat.lua','QuestMarks.lua','VendorMarks.lua','HideAll.lua','OptionsSkin.lua','OptionsModern.lua','ColorPicker.lua','Options.lua','OptionsWindow.lua','Launcher.lua'}) do assert(loadfile(root..file))('ForeverNames',A) end
 -- Companion Journal installed too: your People list, the journal, and the API
 -- Forever Names asks for display names and icons. Its own namespace: C.
 local C={}

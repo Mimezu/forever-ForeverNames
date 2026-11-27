@@ -782,6 +782,8 @@ SlashCmdList.FOREVERNAMES = function(message)
         print("Forever Names: global fade/scale/distance overrides disabled; Blizzard defaults restored, or queued until combat ends.")
     elseif command == "names" then
         for name in pairs(cvars) do print("Forever Names:", name, "=", tostring(GetCVar(name))) end
+    elseif command == "threat" then
+        A.DebugThreat()
     elseif command == "plate" then
         A.DebugPlate("target")
     elseif command == "debug" then
